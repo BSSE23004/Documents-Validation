@@ -1,0 +1,150 @@
+// Prisma Schema for Secure Delivery & Verification System
+// Backend Squad A - Core Architecture & Security
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Model - Core authentication entity with role-based access control
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  role        String   @default("user") // admin, issuer, verifier, user
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sessions           Session[]
+  documents          Document[]
+  verificationLogs   VerificationLog[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+// Session Model - Device-based session management ensuring one session per device
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  deviceId     String   // Unique identifier for device/browser
+  token        String   @unique // JWT token
+  refreshToken String?  @unique // Refresh token for token rotation
+  userAgent    String?  // Browser/device info
+  ipAddress    String?  // Client IP address
+  expiresAt    DateTime // Token expiration time
+  createdAt    DateTime @default(now())
+  lastActiveAt DateTime @default(now())
+
+  // Relations
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([userId])
+  @@index([token])
+  @@index([deviceId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+// Issuer Model - Manages organizations/authorities that issue documents
+model Issuer {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  logoUrl     String?
+  apiKey      String   @unique // API key for integration
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  documents   Document[]
+
+  @@index([email])
+  @@index([apiKey])
+  @@map("issuers")
+}
+
+// DocumentType Model - Categorizes different types of verifiable documents
+model DocumentType {
+  id          String   @id @default(uuid())
+  name        String   @unique // e.g., "Internship Offer", "Certificate", "Project Handoff"
+  description String?
+  template    String?  // Template configuration (JSON)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  documents   Document[]
+
+  @@index([name])
+  @@map("document_types")
+}
+
+// Document Model - Core document/certificate management with QR codes
+model Document {
+  id              String   @id @default(uuid())
+  qrCodeId        String   @unique // Cryptographic QR code identifier
+  documentTypeId  String
+  issuerId        String
+  createdById     String
+  recipientName   String
+  recipientEmail  String
+  title           String
+  description     String?
+  referenceNumber String   @unique // Business reference number
+  issuanceDate    DateTime @default(now())
+  expiryDate      DateTime?
+  status          String   @default("active") // active, revoked, expired
+  metadata        Json?    // Flexible document-specific data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  documentType    DocumentType    @relation(fields: [documentTypeId], references: [id])
+  issuer          Issuer          @relation(fields: [issuerId], references: [id])
+  createdBy       User            @relation(fields: [createdById], references: [id])
+  verificationLogs VerificationLog[]
+
+  @@unique([qrCodeId])
+  @@unique([referenceNumber])
+  @@index([qrCodeId])
+  @@index([referenceNumber])
+  @@index([documentTypeId])
+  @@index([issuerId])
+  @@index([createdById])
+  @@index([status])
+  @@index([expiryDate])
+  @@map("documents")
+}
+
+// VerificationLog Model - Cryptographic verification tracking and audit logging
+model VerificationLog {
+  id                 String   @id @default(uuid())
+  documentId         String
+  qrCodeId           String
+  verificationStatus String   // valid, invalid, expired, revoked
+  ipAddress          String?
+  userAgent          String?
+  timestamp          DateTime @default(now())
+  errorMessage       String?
+
+  // Relations
+  document           Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([qrCodeId])
+  @@index([verificationStatus])
+  @@index([timestamp])
+  @@map("verification_logs")
+}

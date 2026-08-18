@@ -1,0 +1,115 @@
+/**
+ * Application Constants
+ * Centralized configuration values for the application
+ */
+
+// User roles
+const USER_ROLES = {
+  ADMIN: 'admin',
+  ISSUER: 'issuer',
+  VERIFIER: 'verifier',
+  USER: 'user'
+};
+
+// Document statuses
+const DOCUMENT_STATUS = {
+  ACTIVE: 'active',
+  REVOKED: 'revoked',
+  EXPIRED: 'expired'
+};
+
+// Verification statuses
+const VERIFICATION_STATUS = {
+  VALID: 'valid',
+  INVALID: 'invalid',
+  EXPIRED: 'expired',
+  REVOKED: 'revoked'
+};
+
+// Error codes
+const ERROR_CODES = {
+  // Authentication errors
+  AUTH_INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
+  AUTH_TOKEN_MISSING: 'AUTH_TOKEN_MISSING',
+  AUTH_TOKEN_INVALID: 'AUTH_TOKEN_INVALID',
+  AUTH_TOKEN_EXPIRED: 'AUTH_TOKEN_EXPIRED',
+  AUTH_USER_INACTIVE: 'AUTH_USER_INACTIVE',
+  AUTH_INSUFFICIENT_PERMISSIONS: 'AUTH_INSUFFICIENT_PERMISSIONS',
+  AUTH_REQUIRED: 'AUTH_REQUIRED',
+  
+  // Validation errors
+  VALIDATION_INVALID_INPUT: 'VALIDATION_INVALID_INPUT',
+  VALIDATION_DUPLICATE_EMAIL: 'VALIDATION_DUPLICATE_EMAIL',
+  VALIDATION_DUPLICATE: 'VALIDATION_DUPLICATE',
+  
+  // Document errors
+  DOCUMENT_NOT_FOUND: 'DOCUMENT_NOT_FOUND',
+  DOCUMENT_QR_NOT_FOUND: 'DOCUMENT_QR_NOT_FOUND',
+  DOCUMENT_EXPIRED: 'DOCUMENT_EXPIRED',
+  DOCUMENT_REVOKED: 'DOCUMENT_REVOKED',
+  
+  // Rate limiting
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+  AUTH_RATE_LIMIT_EXCEEDED: 'AUTH_RATE_LIMIT_EXCEEDED',
+  
+  // Database errors
+  DATABASE_ERROR: 'DATABASE_ERROR',
+  
+  // General errors
+  NOT_FOUND: 'NOT_FOUND',
+  INTERNAL_ERROR: 'INTERNAL_ERROR'
+};
+
+// HTTP status codes
+const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503
+};
+
+// JWT configuration
+const JWT_CONFIG = {
+  EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  ALGORITHM: 'RS256'
+};
+
+// Session configuration
+const SESSION_CONFIG = {
+  DURATION_DAYS: parseInt(process.env.SESSION_DURATION_DAYS) || 7,
+  MAX_SESSIONS_PER_USER: parseInt(process.env.MAX_SESSIONS_PER_USER) || 5
+};
+
+// Rate limiting configuration
+const RATE_LIMIT_CONFIG = {
+  WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+  MAX_REQUESTS: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  AUTH_MAX_REQUESTS: 5,
+  VERIFICATION_MAX_REQUESTS: 100
+};
+
+// Pagination defaults
+const PAGINATION = {
+  DEFAULT_PAGE: 1,
+  DEFAULT_LIMIT: 20,
+  MAX_LIMIT: 100
+};
+
+module.exports = {
+  USER_ROLES,
+  DOCUMENT_STATUS,
+  VERIFICATION_STATUS,
+  ERROR_CODES,
+  HTTP_STATUS,
+  JWT_CONFIG,
+  SESSION_CONFIG,
+  RATE_LIMIT_CONFIG,
+  PAGINATION
+};
