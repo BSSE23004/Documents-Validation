@@ -9,7 +9,4 @@ router.get('/profile', authenticate, userController.getCurrentUserProfile);
 // PUT /api/users/profile - Update user profile
 router.put('/profile', authenticate, userController.updateUserProfile);
 
-// GET /api/users/sessions - Get user sessions
-router.get('/sessions', authenticate, userController.getUserSessions);
-
 module.exports = router;

@@ -27,18 +27,7 @@ const verifyByQRCode = async (qrCodeId, userAgent, ipAddress) => {
   });
 
   if (!document) {
-    // Log failed verification
-    await prisma.verificationLog.create({
-      data: {
-        documentId: 'unknown',
-        qrCodeId,
-        verificationStatus: VERIFICATION_STATUS.INVALID,
-        ipAddress,
-        userAgent,
-        errorMessage: 'QR code not found'
-      }
-    });
-
+    // Don't create verification log for invalid QR codes (no document to reference)
     return {
       success: false,
       verificationStatus: VERIFICATION_STATUS.INVALID,
@@ -135,17 +124,7 @@ const verifyByReference = async (referenceNumber, userAgent, ipAddress) => {
   });
 
   if (!document) {
-    await prisma.verificationLog.create({
-      data: {
-        documentId: 'unknown',
-        qrCodeId: 'unknown',
-        verificationStatus: VERIFICATION_STATUS.INVALID,
-        ipAddress,
-        userAgent,
-        errorMessage: 'Reference number not found'
-      }
-    });
-
+    // Don't create verification log for invalid reference numbers (no document to reference)
     return {
       success: false,
       verificationStatus: VERIFICATION_STATUS.INVALID,
@@ -206,6 +185,24 @@ const getVerificationLogs = async (filters, userRole) => {
 
 // Helper function to format document for verification response
 const formatDocumentForVerification = (document) => {
+  // Handle metadata - it might be a JSON object or string
+  let safeMetadata = null;
+  if (document.metadata) {
+    try {
+      const metadataObj = typeof document.metadata === 'string' 
+        ? JSON.parse(document.metadata) 
+        : document.metadata;
+      
+      safeMetadata = {
+        position: metadataObj.position,
+        department: metadataObj.department
+      };
+    } catch (error) {
+      // If metadata parsing fails, set to null
+      safeMetadata = null;
+    }
+  }
+
   return {
     documentType: document.documentType.name,
     title: document.title,
@@ -220,11 +217,7 @@ const formatDocumentForVerification = (document) => {
     issuanceDate: document.issuanceDate,
     referenceNumber: document.referenceNumber,
     status: document.status,
-    // Include only safe metadata fields
-    metadata: document.metadata ? {
-      position: document.metadata.position,
-      department: document.metadata.department
-    } : null
+    metadata: safeMetadata
   };
 };
 

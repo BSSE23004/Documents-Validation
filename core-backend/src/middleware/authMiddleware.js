@@ -1,11 +1,13 @@
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
+const authService = require('../services/authService');
 
 const prisma = new PrismaClient();
 
 /**
  * Authentication Middleware
  * Verifies JWT tokens and attaches user information to request
+ * Implements proper session management with device-based authentication
  */
 
 const authenticate = async (req, res, next) => {
@@ -24,73 +26,37 @@ const authenticate = async (req, res, next) => {
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check if session exists and is valid
-    const session = await prisma.session.findUnique({
-      where: { token },
-      include: { user: true }
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_TOKEN_EXPIRED',
-          message: 'Authentication token has expired'
-        }
-      });
-    }
-
-    if (!session.user.isActive) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_USER_INACTIVE',
-          message: 'User account is inactive'
-        }
-      });
-    }
+    // Use authService to validate session (includes database check)
+    const { user, sessionId } = await authService.validateSession(token);
 
     // Attach user information to request
     req.user = {
-      id: session.user.id,
-      email: session.user.email,
-      name: session.user.name,
-      role: session.user.role,
-      sessionId: session.id
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      sessionId: sessionId
     };
-
-    // Update last active timestamp
-    await prisma.session.update({
-      where: { id: session.id },
-      data: { lastActiveAt: new Date() }
-    });
 
     next();
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
+    if (error.code) {
       return res.status(401).json({
         success: false,
         error: {
-          code: 'AUTH_TOKEN_INVALID',
-          message: 'Invalid authentication token'
+          code: error.code,
+          message: error.message
         }
       });
     }
     
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_TOKEN_EXPIRED',
-          message: 'Authentication token has expired'
-        }
-      });
-    }
-
-    next(error);
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'AUTH_TOKEN_INVALID',
+        message: 'Invalid authentication token'
+      }
+    });
   }
 };
 
@@ -136,8 +102,47 @@ const deviceInfo = (req, res, next) => {
   next();
 };
 
+/**
+ * Optional Authentication Middleware
+ * Attaches user info if token is present, but doesn't require it
+ */
+
+const optionalAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      
+      try {
+        const { user, sessionId } = await authService.validateSession(token);
+        
+        req.user = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          sessionId: sessionId
+        };
+      } catch (error) {
+        // If token is invalid, just continue without user info
+        req.user = null;
+      }
+    } else {
+      req.user = null;
+    }
+    
+    next();
+  } catch (error) {
+    // If any error occurs, continue without user info
+    req.user = null;
+    next();
+  }
+};
+
 module.exports = {
   authenticate,
   authorize,
-  deviceInfo
+  deviceInfo,
+  optionalAuth
 };

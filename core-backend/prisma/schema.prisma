@@ -24,7 +24,6 @@ model User {
   // Relations
   sessions           Session[]
   documents          Document[]
-  verificationLogs   VerificationLog[]
 
   @@index([email])
   @@index([role])
@@ -79,7 +78,7 @@ model DocumentType {
   id          String   @id @default(uuid())
   name        String   @unique // e.g., "Internship Offer", "Certificate", "Project Handoff"
   description String?
-  template    String?  // Template configuration (JSON)
+  template    Json?    // Template configuration (JSON)
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -116,10 +115,6 @@ model Document {
   createdBy       User            @relation(fields: [createdById], references: [id])
   verificationLogs VerificationLog[]
 
-  @@unique([qrCodeId])
-  @@unique([referenceNumber])
-  @@index([qrCodeId])
-  @@index([referenceNumber])
   @@index([documentTypeId])
   @@index([issuerId])
   @@index([createdById])

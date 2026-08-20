@@ -1,4 +1,5 @@
 const userService = require('../services/userService');
+const authService = require('../services/authService');
 
 /**
  * User Controller
@@ -39,16 +40,16 @@ const updateUserProfile = async (req, res, next) => {
   }
 };
 
-// Get user sessions
+// Get user sessions (using authService for proper session management)
 const getUserSessions = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     
-    const result = await userService.getUserSessions(userId);
+    const sessions = await authService.getUserSessions(userId);
     
     res.status(200).json({
       success: true,
-      data: result
+      data: { sessions }
     });
   } catch (error) {
     next(error);
