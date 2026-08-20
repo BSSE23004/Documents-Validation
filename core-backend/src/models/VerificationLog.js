@@ -4,7 +4,6 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
 class VerificationLog {
@@ -16,7 +15,8 @@ class VerificationLog {
           select: {
             id: true,
             title: true,
-            referenceNumber: true
+            referenceNumber: true,
+            recipientName: true
           }
         }
       }
@@ -34,6 +34,19 @@ class VerificationLog {
     return await prisma.verificationLog.findMany({
       where: { qrCodeId },
       orderBy: { timestamp: 'desc' }
+    });
+  }
+
+  static async create(data) {
+    return await prisma.verificationLog.create({
+      data
+    });
+  }
+
+  static async update(id, data) {
+    return await prisma.verificationLog.update({
+      where: { id },
+      data
     });
   }
 }

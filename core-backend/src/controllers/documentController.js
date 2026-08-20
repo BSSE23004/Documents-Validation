@@ -2,10 +2,11 @@ const documentService = require('../services/documentService');
 
 /**
  * Document Controller
- * Handles document management requests
+ * Handles digital asset & document management requests
+ * Specification Section 4.4
  */
 
-// Create a new document
+// POST /api/documents - Create a new digital asset (document)
 const createDocument = async (req, res, next) => {
   try {
     const userId = req.user?.id;
@@ -23,14 +24,15 @@ const createDocument = async (req, res, next) => {
   }
 };
 
-// Get document by ID
+// GET /api/documents/:id - Get document by ID
 const getDocumentById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
     const userRole = req.user?.role;
+    const userEmail = req.user?.email;
     
-    const result = await documentService.getDocumentById(id, userId, userRole);
+    const result = await documentService.getDocumentById(id, userId, userRole, userEmail);
     
     res.status(200).json({
       success: true,
@@ -41,20 +43,23 @@ const getDocumentById = async (req, res, next) => {
   }
 };
 
-// Get all documents with pagination and filters
+// GET /api/documents - Get all documents with pagination, search, and filters
 const getAllDocuments = async (req, res, next) => {
   try {
     const userId = req.user?.id;
     const userRole = req.user?.role;
+    const userEmail = req.user?.email;
     const filters = {
-      page: parseInt(req.query.page) || 1,
-      limit: parseInt(req.query.limit) || 20,
+      page: req.query.page,
+      limit: req.query.limit,
       status: req.query.status,
       documentTypeId: req.query.documentTypeId,
-      issuerId: req.query.issuerId
+      issuerId: req.query.issuerId,
+      recipientEmail: req.query.recipientEmail,
+      search: req.query.search
     };
     
-    const result = await documentService.getAllDocuments(filters, userId, userRole);
+    const result = await documentService.getAllDocuments(filters, userId, userRole, userEmail);
     
     res.status(200).json({
       success: true,
@@ -65,7 +70,7 @@ const getAllDocuments = async (req, res, next) => {
   }
 };
 
-// Update document
+// PUT /api/documents/:id - Update document
 const updateDocument = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -85,7 +90,7 @@ const updateDocument = async (req, res, next) => {
   }
 };
 
-// Delete document
+// DELETE /api/documents/:id - Delete document
 const deleteDocument = async (req, res, next) => {
   try {
     const { id } = req.params;

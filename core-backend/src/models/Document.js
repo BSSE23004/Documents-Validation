@@ -4,7 +4,6 @@
  */
 
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
 class Document {
@@ -18,7 +17,8 @@ class Document {
           select: {
             id: true,
             email: true,
-            name: true
+            name: true,
+            role: true
           }
         }
       }
@@ -35,7 +35,8 @@ class Document {
           select: {
             id: true,
             email: true,
-            name: true
+            name: true,
+            role: true
           }
         }
       }
@@ -52,10 +53,46 @@ class Document {
           select: {
             id: true,
             email: true,
-            name: true
+            name: true,
+            role: true
           }
         }
       }
+    });
+  }
+
+  static async create(data) {
+    return await prisma.document.create({
+      data,
+      include: {
+        documentType: true,
+        issuer: true,
+        createdBy: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true
+          }
+        }
+      }
+    });
+  }
+
+  static async update(id, data) {
+    return await prisma.document.update({
+      where: { id },
+      data,
+      include: {
+        documentType: true,
+        issuer: true
+      }
+    });
+  }
+
+  static async delete(id) {
+    return await prisma.document.delete({
+      where: { id }
     });
   }
 }

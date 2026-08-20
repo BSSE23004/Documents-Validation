@@ -2,10 +2,11 @@ const verificationService = require('../services/verificationService');
 
 /**
  * Verification Controller
- * Handles document verification requests
+ * Handles document verification and audit logging requests
+ * Specification Section 4.5
  */
 
-// Verify document by QR code
+// POST /api/verify/qr-code - Verify document by QR code (public)
 const verifyByQRCode = async (req, res, next) => {
   try {
     const { qrCodeId } = req.body;
@@ -13,19 +14,13 @@ const verifyByQRCode = async (req, res, next) => {
     
     const result = await verificationService.verifyByQRCode(qrCodeId, userAgent, ipAddress);
     
-    res.status(200).json({
-      success: result.success,
-      verificationStatus: result.verificationStatus,
-      message: result.message,
-      errorCode: result.errorCode,
-      data: result.data
-    });
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
 };
 
-// Verify document by reference number
+// POST /api/verify/reference - Verify document by reference number (public)
 const verifyByReference = async (req, res, next) => {
   try {
     const { referenceNumber } = req.body;
@@ -33,19 +28,13 @@ const verifyByReference = async (req, res, next) => {
     
     const result = await verificationService.verifyByReference(referenceNumber, userAgent, ipAddress);
     
-    res.status(200).json({
-      success: result.success,
-      verificationStatus: result.verificationStatus,
-      message: result.message,
-      errorCode: result.errorCode,
-      data: result.data
-    });
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
 };
 
-// Get verification logs
+// GET /api/verify/logs - Get verification logs (admin/verifier)
 const getVerificationLogs = async (req, res, next) => {
   try {
     const userRole = req.user?.role;
@@ -55,8 +44,8 @@ const getVerificationLogs = async (req, res, next) => {
       status: req.query.status,
       startDate: req.query.startDate,
       endDate: req.query.endDate,
-      page: parseInt(req.query.page) || 1,
-      limit: parseInt(req.query.limit) || 20
+      page: req.query.page,
+      limit: req.query.limit
     };
     
     const result = await verificationService.getVerificationLogs(filters, userRole);
@@ -70,8 +59,44 @@ const getVerificationLogs = async (req, res, next) => {
   }
 };
 
+// GET /api/verify/logs/:id - Get single verification log (admin/verifier)
+const getVerificationLogById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await verificationService.getVerificationLogById(id);
+    
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// PUT /api/verify/logs/:id - Update verification log record (admin/verifier)
+const updateVerificationLog = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const result = await verificationService.updateVerificationLog(id, updateData);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Verification log updated successfully',
+      data: result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   verifyByQRCode,
   verifyByReference,
-  getVerificationLogs
+  getVerificationLogs,
+  getVerificationLogById,
+  updateVerificationLog
 };
