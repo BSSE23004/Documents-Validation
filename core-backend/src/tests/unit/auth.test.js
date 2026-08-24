@@ -1,60 +1,77 @@
 const { verifyJWTToken, generateJWTToken } = require('../../services/authService');
 const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
 
-process.env.TEST_JWT_SECRET = 'test-secret';
+const prisma = new PrismaClient();
 
-test("accepts a valid JWT and returns a decoded payload", () => {
-    const payload = {
-        userId: '123',
-        email: 'test@example.com',
-        role: 'user'
-    }
+describe('Database connection', () => {
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
 
-    const token = generateJWTToken(payload, '1h');
-    const decoded = verifyJWTToken(token);
+  test('should connect to the test database', async () => {
+    const users = await prisma.user.findMany();
 
-    expect(decoded.userId).toBe(payload.userId);
-    expect(decoded.email).toBe(payload.email);
-    expect(decoded.role).toBe(payload.role);
+    expect(Array.isArray(users)).toBe(true);
+  });
 });
 
-test("rejects a malformed JWT", () => {
-    const malformedToken = 'fake-jwt-token';
+describe("verifyJWTToken", () => {
+    process.env.TEST_JWT_SECRET = 'test-secret';
 
-    expect(() => verifyJWTToken(malformedToken)).toThrow('Invalid token');
-});
+    test("accepts a valid JWT and returns a decoded payload", () => {
+        const payload = {
+            userId: '123',
+            email: 'test@example.com',
+            role: 'user'
+        }
 
+        const token = generateJWTToken(payload, '1h');
+        const decoded = verifyJWTToken(token);
 
-test("rejects a tampered JWT", () => {
-    const payload = {
-        userId: '123',
-        email: 'test@example.com',
-        role: 'user'
-    }
+        expect(decoded.userId).toBe(payload.userId);
+        expect(decoded.email).toBe(payload.email);
+        expect(decoded.role).toBe(payload.role);
+    });
 
-    const token = generateJWTToken(payload, '1h');
-    // Tamper with the token by changing a character
-    const parts = token.split('.');
-    const tamperedPayload = Buffer
-        .from(JSON.stringify({
-            ...payload,
-            role: 'admin'
-        }))
-        .toString('base64url');
-    const tamperedToken = `${parts[0]}.${tamperedPayload}.${parts[2]}`;
+    test("rejects a malformed JWT", () => {
+        const malformedToken = 'fake-jwt-token';
 
-    expect(() => verifyJWTToken(tamperedToken)).toThrow('Invalid token');
-});
+        expect(() => verifyJWTToken(malformedToken)).toThrow('Invalid token');
+    });
 
 
-test("rejects an exprired JWT", () => {
-    const payload = {
-        userId: '123',
-        email: 'test@example.com',
-        role: 'user'
-    }
-    const token = generateJWTToken(payload, '-1s');
+    test("rejects a tampered JWT", () => {
+        const payload = {
+            userId: '123',
+            email: 'test@example.com',
+            role: 'user'
+        }
 
-    expect(() => verifyJWTToken(token)).toThrow('Token expired');
+        const token = generateJWTToken(payload, '1h');
+        // Tamper with the token by changing a character
+        const parts = token.split('.');
+        const tamperedPayload = Buffer
+            .from(JSON.stringify({
+                ...payload,
+                role: 'admin'
+            }))
+            .toString('base64url');
+        const tamperedToken = `${parts[0]}.${tamperedPayload}.${parts[2]}`;
 
+        expect(() => verifyJWTToken(tamperedToken)).toThrow('Invalid token');
+    });
+
+
+    test("rejects an exprired JWT", () => {
+        const payload = {
+            userId: '123',
+            email: 'test@example.com',
+            role: 'user'
+        }
+        const token = generateJWTToken(payload, '-1s');
+
+        expect(() => verifyJWTToken(token)).toThrow('Token expired');
+
+    });
 });
