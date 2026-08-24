@@ -27,11 +27,11 @@ const generateRefreshToken = () => {
 };
 
 // Helper function to generate JWT token
-const generateJWTToken = (payload) => {
+const generateJWTToken = (payload, expiry) => {
   return jwt.sign(
     payload,
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    { expiresIn: expiry || process.env.JWT_EXPIRES_IN || '7d' }
   );
 };
 
@@ -443,5 +443,7 @@ module.exports = {
   refreshToken,
   validateSession,
   getUserSessions,
-  revokeSession
+  revokeSession,
+  verifyJWTToken,
+  generateJWTToken
 };
