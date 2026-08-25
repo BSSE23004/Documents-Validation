@@ -92,7 +92,7 @@ const SESSION_CONFIG = {
 const RATE_LIMIT_CONFIG = {
   WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
   MAX_REQUESTS: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  AUTH_MAX_REQUESTS: 5,
+  AUTH_MAX_REQUESTS: parseInt(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS) || 20,
   VERIFICATION_MAX_REQUESTS: 100
 };
 

@@ -56,8 +56,26 @@ const getUserSessions = async (req, res, next) => {
   }
 };
 
+// Revoke a specific session
+const revokeSession = async (req, res, next) => {
+  try {
+    const userId = req.user?.id;
+    const { sessionId } = req.params;
+
+    await authService.revokeSession(userId, sessionId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Session revoked successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCurrentUserProfile,
   updateUserProfile,
-  getUserSessions
+  getUserSessions,
+  revokeSession
 };

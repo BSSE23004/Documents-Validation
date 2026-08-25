@@ -9,4 +9,10 @@ router.get('/profile', authenticate, userController.getCurrentUserProfile);
 // PUT /api/users/profile - Update user profile
 router.put('/profile', authenticate, userController.updateUserProfile);
 
+// GET /api/users/sessions - Get all active sessions for current user
+router.get('/sessions', authenticate, userController.getUserSessions);
+
+// DELETE /api/users/sessions/:sessionId - Revoke a specific session
+router.delete('/sessions/:sessionId', authenticate, userController.revokeSession);
+
 module.exports = router;
