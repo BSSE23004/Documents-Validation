@@ -73,6 +73,13 @@ describe('Document Service Unit Tests', () => {
         status: 'active',
         createdAt: new Date('2026-08-18T10:00:00Z'),
         recipientEmail: 'jane@example.com',
+        recipientName: 'Jane Smith',
+        issuanceDate: new Date('2026-08-18T10:00:00Z'),
+        expiryDate: new Date('2026-12-31T23:59:59Z'),
+        metadata: { position: 'Software Engineer' },
+        documentType: {
+          name: 'Internship Offer'
+        }
       };
       prisma.document.create.mockResolvedValue(createdDocMock);
 
