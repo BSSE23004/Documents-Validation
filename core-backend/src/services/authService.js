@@ -16,6 +16,41 @@ const prisma = new PrismaClient();
  * Handles authentication business logic with proper JWT and session management
  */
 
+// Helper function to generate device ID from user agent
+const generateDeviceId = (userAgent) => {
+  if (!userAgent) return uuidv4();
+  
+  // Create a hash of the user agent for consistent device identification
+  const hash = crypto.createHash('sha256').update(userAgent).digest('hex');
+  return hash.substring(0, 64); // Use first 64 characters
+};
+
+// Helper function to generate refresh token
+const generateRefreshToken = () => {
+  return crypto.randomBytes(40).toString('hex');
+};
+
+// Helper function to generate JWT token
+const generateJWTToken = (payload, expiry) => {
+  return jwt.sign(
+    payload,
+    process.env.JWT_SECRET,
+    { expiresIn: expiry || process.env.JWT_EXPIRES_IN || '7d' }
+  );
+};
+
+// Helper function to verify JWT token
+const verifyJWTToken = (token) => {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new Error('Token expired');
+    }
+    throw new Error('Invalid token');
+  }
+};
+
 // Register a new user
 const register = async (email, password, name, role = USER_ROLES.USER) => {
   // Validate email format
@@ -408,5 +443,7 @@ module.exports = {
   refreshToken,
   validateSession,
   getUserSessions,
-  revokeSession
+  revokeSession,
+  verifyJWTToken,
+  generateJWTToken
 };
