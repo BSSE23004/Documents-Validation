@@ -1,9 +1,13 @@
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
-const { v4: uuidv4 } = require('uuid');
-const crypto = require('crypto');
 const { ERROR_CODES, USER_ROLES } = require('../config/constants');
+const {
+  generateJWTToken,
+  verifyJWTToken,
+  generateRefreshToken,
+  generateDeviceId,
+  calculateSessionExpiration
+} = require('../config/jwt');
 
 const prisma = new PrismaClient();
 
@@ -185,7 +189,7 @@ const login = async (email, password, userAgent, ipAddress) => {
     userId: user.id,
     email: user.email,
     role: user.role,
-    sessionId: uuidv4() // Will be replaced with actual session ID
+    sessionId: null // Will be replaced with actual session ID
   };
 
   // Generate JWT token
@@ -195,9 +199,7 @@ const login = async (email, password, userAgent, ipAddress) => {
   const refreshToken = generateRefreshToken();
 
   // Calculate expiration date
-  const sessionDurationDays = parseInt(process.env.SESSION_DURATION_DAYS) || 7;
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + sessionDurationDays);
+  const expiresAt = calculateSessionExpiration();
 
   // Create session in database
   const session = await prisma.session.create({
@@ -311,9 +313,7 @@ const refreshToken = async (refreshToken) => {
   const newRefreshToken = generateRefreshToken();
 
   // Update session with new tokens
-  const sessionDurationDays = parseInt(process.env.SESSION_DURATION_DAYS) || 7;
-  const newExpiresAt = new Date();
-  newExpiresAt.setDate(newExpiresAt.getDate() + sessionDurationDays);
+  const newExpiresAt = calculateSessionExpiration();
 
   await prisma.session.update({
     where: { id: session.id },
