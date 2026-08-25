@@ -1,4 +1,5 @@
 const verificationService = require('../services/verificationService');
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * Verification Controller
@@ -14,7 +15,10 @@ const verifyByQRCode = async (req, res, next) => {
     
     const result = await verificationService.verifyByQRCode(qrCodeId, userAgent, ipAddress);
     
-    res.status(200).json(result);
+    ApiResponse.success(res, {
+      message: 'Verification completed',
+      data: result
+    });
   } catch (error) {
     next(error);
   }
@@ -28,7 +32,10 @@ const verifyByReference = async (req, res, next) => {
     
     const result = await verificationService.verifyByReference(referenceNumber, userAgent, ipAddress);
     
-    res.status(200).json(result);
+    ApiResponse.success(res, {
+      message: 'Verification completed',
+      data: result
+    });
   } catch (error) {
     next(error);
   }
@@ -50,8 +57,7 @@ const getVerificationLogs = async (req, res, next) => {
     
     const result = await verificationService.getVerificationLogs(filters, userRole);
     
-    res.status(200).json({
-      success: true,
+    ApiResponse.success(res, {
       data: result
     });
   } catch (error) {
@@ -66,8 +72,7 @@ const getVerificationLogById = async (req, res, next) => {
     
     const result = await verificationService.getVerificationLogById(id);
     
-    res.status(200).json({
-      success: true,
+    ApiResponse.success(res, {
       data: result
     });
   } catch (error) {
@@ -83,8 +88,7 @@ const updateVerificationLog = async (req, res, next) => {
     
     const result = await verificationService.updateVerificationLog(id, updateData);
     
-    res.status(200).json({
-      success: true,
+    ApiResponse.success(res, {
       message: 'Verification log updated successfully',
       data: result
     });

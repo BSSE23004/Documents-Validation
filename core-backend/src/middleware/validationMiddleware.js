@@ -1,5 +1,6 @@
 const { validationResult, body, param, query } = require('express-validator');
 const { DOCUMENT_STATUS, VERIFICATION_STATUS } = require('../config/constants');
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * Validation Middleware
@@ -10,18 +11,15 @@ const validate = (req, res, next) => {
   const errors = validationResult(req);
   
   if (!errors.isEmpty()) {
-    return res.status(422).json({
-      success: false,
-      error: {
+    return ApiResponse.validationError(res, {
+      message: 'Input validation failed',
+      data: {
         code: 'VALIDATION_INVALID_INPUT',
-        message: 'Input validation failed',
         details: errors.array().map(error => ({
           field: error.path,
           message: error.msg,
           value: error.value
-        })),
-        timestamp: new Date().toISOString(),
-        path: req.originalUrl || req.path
+        }))
       }
     });
   }

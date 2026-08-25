@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const { RATE_LIMIT_CONFIG } = require('./config/constants');
+const ApiResponse = require('./utils/ApiResponse');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -64,11 +65,10 @@ const limiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.WINDOW_MS,
   max: RATE_LIMIT_CONFIG.MAX_REQUESTS,
   message: {
+    statusCode: 429,
     success: false,
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many requests from this IP, please try again later.'
-    }
+    message: 'Too many requests from this IP, please try again later.',
+    data: { code: 'RATE_LIMIT_EXCEEDED' }
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -84,21 +84,21 @@ const authLimiter = rateLimit({
   windowMs: RATE_LIMIT_CONFIG.WINDOW_MS,
   max: RATE_LIMIT_CONFIG.AUTH_MAX_REQUESTS,
   message: {
+    statusCode: 429,
     success: false,
-    error: {
-      code: 'AUTH_RATE_LIMIT_EXCEEDED',
-      message: 'Too many authentication attempts, please try again later.'
-    }
+    message: 'Too many authentication attempts, please try again later.',
+    data: { code: 'AUTH_RATE_LIMIT_EXCEEDED' }
   }
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
+  ApiResponse.success(res, {
     message: 'Server is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+    data: {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development'
+    }
   });
 });
 
