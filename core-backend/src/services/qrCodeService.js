@@ -20,23 +20,27 @@ const generateQRCodeUrl = (qrCodeId) => {
 
 /**
  * Backend Squad B Integration Hook: QR Code Generation
- * Specification Section 6.1.1:
- * Endpoint: POST /documents (Squad A)
+ * API Contract: POST /api/internal/qr/generate (Squad B)
  * Trigger: After document creation
- * Target: POST /api/internal/qr/generate (Squad B)
  * Headers: x-internal-api-key
- * Data: Document ID, QR code ID
- * Purpose: Trigger QR code generation by Squad B
+ * Purpose: Trigger QR code generation by Squad B with full document data
  */
-const triggerQRCodeGenerationHook = async (documentId, qrCodeId) => {
+const triggerQRCodeGenerationHook = async (documentData) => {
   const squadBUrl = process.env.SQUAD_B_SERVICE_URL || 'http://localhost:5000';
   const internalApiKey = process.env.INTERNAL_API_KEY;
 
   try {
     const payload = {
-      documentId,
-      qrCodeId,
-      timestamp: new Date().toISOString()
+      documentId: documentData.id,
+      qrCodeId: documentData.qrCodeId,
+      documentType: documentData.documentType,
+      title: documentData.title,
+      referenceNumber: documentData.referenceNumber,
+      recipientName: documentData.recipientName,
+      recipientEmail: documentData.recipientEmail,
+      issuanceDate: documentData.issuanceDate,
+      expiryDate: documentData.expiryDate,
+      metadata: documentData.metadata
     };
 
     // Call Squad B endpoint with 5 second timeout

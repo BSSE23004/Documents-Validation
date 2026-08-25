@@ -114,7 +114,18 @@ const createDocument = async (documentData, userId) => {
   });
 
   // 7. Trigger Backend Squad B Integration Hooks asynchronously (Sections 6.1.1 & 6.1.2)
-  triggerQRCodeGenerationHook(document.id, document.qrCodeId).catch(() => {});
+  triggerQRCodeGenerationHook({
+    id: document.id,
+    qrCodeId: document.qrCodeId,
+    documentType: document.documentType.name,
+    title: document.title,
+    referenceNumber: document.referenceNumber,
+    recipientName: document.recipientName,
+    recipientEmail: document.recipientEmail,
+    issuanceDate: document.issuanceDate,
+    expiryDate: document.expiryDate,
+    metadata: document.metadata
+  }).catch(() => {});
   triggerNotificationHook(document.recipientEmail, {
     id: document.id,
     title: document.title,

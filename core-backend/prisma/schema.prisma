@@ -115,6 +115,8 @@ model Document {
   createdBy       User            @relation(fields: [createdById], references: [id])
   verificationLogs VerificationLog[]
 
+  @@unique([qrCodeId])
+  @@unique([referenceNumber])
   @@index([documentTypeId])
   @@index([issuerId])
   @@index([createdById])
