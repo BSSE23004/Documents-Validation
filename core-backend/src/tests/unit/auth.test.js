@@ -8,6 +8,7 @@ describe('Database connection', () => {
   afterAll(async () => {
     await prisma.$disconnect();
   });
+  
 
   test('should connect to the test database', async () => {
     const users = await prisma.user.findMany();

@@ -75,7 +75,9 @@ const limiter = rateLimit({
 });
 
 // Apply rate limiting to all requests
-app.use('/api/', limiter);
+if (process.env.NODE_ENV !== 'test') {
+  app.use('/api/', limiter);
+}
 
 // Stricter rate limiting for authentication endpoints
 const authLimiter = rateLimit({
@@ -101,7 +103,12 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-app.use('/api/auth', authLimiter, authRoutes);
+if(process.env.NODE_ENV !== 'test') {
+  app.use('/api/auth', authLimiter, authRoutes);
+}
+else{
+  app.use('/api/auth', authRoutes);
+}
 app.use('/api/documents', documentRoutes);
 app.use('/api/verify', verificationRoutes);
 app.use('/api/users', userRoutes);
