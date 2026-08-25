@@ -23,23 +23,51 @@ const generateQRCodeUrl = (qrCodeId) => {
  * Specification Section 6.1.1:
  * Endpoint: POST /documents (Squad A)
  * Trigger: After document creation
+ * Target: POST /api/internal/qr/generate (Squad B)
+ * Headers: x-internal-api-key
  * Data: Document ID, QR code ID
  * Purpose: Trigger QR code generation by Squad B
  */
 const triggerQRCodeGenerationHook = async (documentId, qrCodeId) => {
+  const squadBUrl = process.env.SQUAD_B_SERVICE_URL || 'http://localhost:5000';
+  const internalApiKey = process.env.INTERNAL_API_KEY;
+
   try {
     const payload = {
       documentId,
       qrCodeId,
       timestamp: new Date().toISOString()
     };
-    // In production, this can emit an event or call Squad B webhook/queue
+
+    // Call Squad B endpoint with 5 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(`${squadBUrl.replace(/\/$/, '')}/api/internal/qr/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-api-key': internalApiKey
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`Squad B QR generation returned status ${response.status}`);
+      return { success: false, status: response.status };
+    }
+
+    const data = await response.json();
     return {
       success: true,
-      data: payload
+      data
     };
   } catch (error) {
-    console.error('Error triggering Squad B QR generation hook:', error.message);
+    // If Squad B is offline during development/testing, log warning gracefully without failing document creation
+    console.warn('Squad B QR generation service notice:', error.message);
     return { success: false, error: error.message };
   }
 };
