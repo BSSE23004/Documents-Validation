@@ -1,12 +1,12 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
 // Initialize Prisma Client
-const prisma = new PrismaClient({
+export const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 });
 
 // Test database connection
-const testConnection = async () => {
+export const testConnection = async () => {
   try {
     await prisma.$connect();
     console.log('✅ Database connected successfully');
@@ -20,7 +20,7 @@ const testConnection = async () => {
 };
 
 // Graceful shutdown
-const gracefulShutdown = async () => {
+export const gracefulShutdown = async () => {
   await prisma.$disconnect();
   console.log('Database connection closed');
   process.exit(0);
@@ -29,4 +29,4 @@ const gracefulShutdown = async () => {
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 
-module.exports = { prisma, testConnection };
+export default prisma;

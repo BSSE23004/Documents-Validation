@@ -1,4 +1,5 @@
-module.exports = {
+export default {
   testEnvironment: 'node',
-  setupFiles: ['<rootDir>/src/tests/setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.js'],
+  transform: {},
 };

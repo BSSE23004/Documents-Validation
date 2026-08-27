@@ -1,7 +1,6 @@
-// seed.js
-require('dotenv').config(); // optional
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcryptjs');
+import 'dotenv/config';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -67,9 +66,6 @@ async function main() {
     });
 
     console.log('Created sessions:', session1.id, session2.id);
-
-    // 3. (Optional) Create other models if they exist
-    // await prisma.document.create({ data: { ... } });
 
     console.log('Seed completed.');
     await prisma.$disconnect();

@@ -1,11 +1,11 @@
-require('dotenv').config();
+import 'dotenv/config';
 
 /**
  * Environment Configuration
  * Provides access to environment variables with defaults
  */
 
-module.exports = {
+export const environment = {
   // Server
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT) || 3000,
@@ -33,7 +33,6 @@ module.exports = {
   
   // Security
   BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_SALT_ROUNDS) || 12,
-  
-  // API Keys (for external services)
-  // Add any external API keys here as needed
 };
+
+export default environment;
