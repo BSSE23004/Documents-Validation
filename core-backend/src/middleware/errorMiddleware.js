@@ -1,4 +1,5 @@
 const winston = require('winston');
+const ApiResponse = require('../utils/ApiResponse');
 
 // Winston logger configuration
 const logger = winston.createLogger({
@@ -28,88 +29,50 @@ const errorHandler = (err, req, res, next) => {
   // Log error for debugging
   logger.error(err.message, { stack: err.stack, path: req.path, method: req.method });
 
-  // Default error
-  let error = {
-    success: false,
-    error: {
-      code: 'INTERNAL_ERROR',
-      message: 'Internal server error',
-      timestamp: new Date().toISOString(),
-      path: req.path
-    }
-  };
-
   // Prisma errors
   if (err.code === 'P2002') {
-    error = {
-      success: false,
-      error: {
+    return ApiResponse.conflict(res, {
+      message: 'A record with this value already exists',
+      data: {
         code: 'VALIDATION_DUPLICATE',
-        message: 'A record with this value already exists',
         details: {
           field: err.meta?.target?.[0] || 'unknown',
           value: err.meta?.target?.[1] || 'unknown'
-        },
-        timestamp: new Date().toISOString(),
-        path: req.path
+        }
       }
-    };
-    return res.status(409).json(error);
+    });
   }
 
   if (err.code === 'P2025') {
-    error = {
-      success: false,
-      error: {
-        code: 'NOT_FOUND',
-        message: 'Record not found',
-        timestamp: new Date().toISOString(),
-        path: req.path
+    return ApiResponse.notFound(res, {
+      message: 'Record not found',
+      data: {
+        code: 'NOT_FOUND'
       }
-    };
-    return res.status(404).json(error);
+    });
   }
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    error = {
-      success: false,
-      error: {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Invalid authentication token',
-        timestamp: new Date().toISOString(),
-        path: req.path
+    return ApiResponse.unauthorized(res, {
+      message: 'Invalid authentication token',
+      data: {
+        code: 'AUTH_TOKEN_INVALID'
       }
-    };
-    return res.status(401).json(error);
+    });
   }
 
   if (err.name === 'TokenExpiredError') {
-    error = {
-      success: false,
-      error: {
-        code: 'AUTH_TOKEN_EXPIRED',
-        message: 'Authentication token has expired',
-        timestamp: new Date().toISOString(),
-        path: req.path
+    return ApiResponse.unauthorized(res, {
+      message: 'Authentication token has expired',
+      data: {
+        code: 'AUTH_TOKEN_EXPIRED'
       }
-    };
-    return res.status(401).json(error);
+    });
   }
 
   // Custom application errors
   if (err.code) {
-    error = {
-      success: false,
-      error: {
-        code: err.code,
-        message: err.message || 'An error occurred',
-        details: err.details,
-        timestamp: new Date().toISOString(),
-        path: req.path
-      }
-    };
-    
     // Map error codes to HTTP status codes
     const statusCodeMap = {
       'AUTH_INVALID_CREDENTIALS': 401,
@@ -126,11 +89,24 @@ const errorHandler = (err, req, res, next) => {
     };
 
     const statusCode = statusCodeMap[err.code] || 500;
-    return res.status(statusCode).json(error);
+    const errorData = { code: err.code };
+    if (err.details !== undefined) {
+      errorData.details = err.details;
+    }
+    return ApiResponse.error(res, {
+      statusCode,
+      message: err.message || 'An error occurred',
+      data: errorData
+    });
   }
 
   // Generic error response
-  res.status(500).json(error);
+  return ApiResponse.internalError(res, {
+    message: 'Internal server error',
+    data: {
+      code: 'INTERNAL_ERROR'
+    }
+  });
 };
 
 /**
@@ -139,13 +115,10 @@ const errorHandler = (err, req, res, next) => {
  */
 
 const notFoundHandler = (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'NOT_FOUND',
-      message: 'Route not found',
-      path: req.path,
-      timestamp: new Date().toISOString()
+  return ApiResponse.notFound(res, {
+    message: 'Route not found',
+    data: {
+      code: 'NOT_FOUND'
     }
   });
 };

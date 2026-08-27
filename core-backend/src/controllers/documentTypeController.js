@@ -1,4 +1,5 @@
 const documentTypeService = require('../services/documentTypeService');
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * Document Type Controller
@@ -10,8 +11,7 @@ const getAllDocumentTypes = async (req, res, next) => {
   try {
     const result = await documentTypeService.getAllDocumentTypes();
     
-    res.status(200).json({
-      success: true,
+    ApiResponse.success(res, {
       data: result
     });
   } catch (error) {
@@ -26,8 +26,7 @@ const createDocumentType = async (req, res, next) => {
     
     const result = await documentTypeService.createDocumentType(documentTypeData);
     
-    res.status(201).json({
-      success: true,
+    ApiResponse.created(res, {
       message: 'Document type created successfully',
       data: result
     });

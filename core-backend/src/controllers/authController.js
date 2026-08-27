@@ -1,4 +1,5 @@
 const authService = require('../services/authService');
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * Auth Controller
@@ -11,8 +12,7 @@ const register = async (req, res, next) => {
     const { email, password, name, role } = req.body;
     const result = await authService.register(email, password, name, role);
     
-    res.status(201).json({
-      success: true,
+    return ApiResponse.created(res, {
       message: 'User registered successfully',
       data: result
     });
@@ -29,8 +29,7 @@ const login = async (req, res, next) => {
     
     const result = await authService.login(email, password, userAgent, ipAddress);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       message: 'Login successful',
       data: result
     });
@@ -47,8 +46,7 @@ const logout = async (req, res, next) => {
     
     await authService.logout(userId, sessionId);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       message: 'Logout successful'
     });
   } catch (error) {
@@ -62,8 +60,7 @@ const refreshToken = async (req, res, next) => {
     const { refreshToken } = req.body;
     const result = await authService.refreshToken(refreshToken);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       data: result
     });
   } catch (error) {
@@ -77,8 +74,7 @@ const getSessions = async (req, res, next) => {
     const userId = req.user?.id;
     const sessions = await authService.getUserSessions(userId);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       data: { sessions }
     });
   } catch (error) {
@@ -94,8 +90,7 @@ const revokeSession = async (req, res, next) => {
     
     await authService.revokeSession(userId, sessionId);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       message: 'Session revoked successfully'
     });
   } catch (error) {
@@ -110,8 +105,7 @@ const logoutAll = async (req, res, next) => {
     
     await authService.logout(userId, null); // null means logout from all devices
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       message: 'Logged out from all devices successfully'
     });
   } catch (error) {

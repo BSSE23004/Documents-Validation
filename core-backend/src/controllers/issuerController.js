@@ -1,4 +1,5 @@
 const issuerService = require('../services/issuerService');
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * Issuer Controller
@@ -10,8 +11,7 @@ const getAllIssuers = async (req, res, next) => {
   try {
     const result = await issuerService.getAllIssuers();
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       data: result
     });
   } catch (error) {
@@ -26,8 +26,7 @@ const createIssuer = async (req, res, next) => {
     
     const result = await issuerService.createIssuer(issuerData);
     
-    res.status(201).json({
-      success: true,
+    return ApiResponse.created(res, {
       message: 'Issuer created successfully',
       data: result
     });

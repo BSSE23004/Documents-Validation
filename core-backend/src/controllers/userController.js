@@ -1,5 +1,6 @@
 const userService = require('../services/userService');
 const authService = require('../services/authService');
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * User Controller
@@ -13,8 +14,7 @@ const getCurrentUserProfile = async (req, res, next) => {
     
     const result = await userService.getUserProfile(userId);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       data: result
     });
   } catch (error) {
@@ -30,8 +30,7 @@ const updateUserProfile = async (req, res, next) => {
     
     const result = await userService.updateUserProfile(userId, updateData);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       message: 'Profile updated successfully',
       data: result
     });
@@ -47,8 +46,7 @@ const getUserSessions = async (req, res, next) => {
     
     const sessions = await authService.getUserSessions(userId);
     
-    res.status(200).json({
-      success: true,
+    return ApiResponse.success(res, {
       data: { sessions }
     });
   } catch (error) {

@@ -182,7 +182,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .post('/api/documents');
 
         expect(response.status).toBe(401);
-        expect(response.body.error.code).toBe('AUTH_TOKEN_MISSING');
+        expect(response.body.data.code).toBe('AUTH_TOKEN_MISSING');
     });
 
     test('rejects a tampered access token', async () => {
@@ -196,7 +196,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${tamperedToken}`);
 
         expect(response.status).toBe(401);
-        expect(response.body.error.code).toBe('AUTH_TOKEN_INVALID');
+        expect(response.body.data.code).toBe('AUTH_TOKEN_INVALID');
     });
 
     // POST /api/documents
@@ -226,7 +226,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -259,7 +259,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -282,7 +282,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${issuerToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -293,7 +293,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -316,7 +316,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${issuerToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -327,7 +327,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -350,7 +350,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${issuerToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -361,7 +361,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -393,7 +393,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${issuerToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });
@@ -404,7 +404,7 @@ describe('Endpoint Authorization Integration Tests', () => {
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
-        expect(response.body.error.code).toBe(
+        expect(response.body.data.code).toBe(
             'AUTH_INSUFFICIENT_PERMISSIONS'
         );
     });

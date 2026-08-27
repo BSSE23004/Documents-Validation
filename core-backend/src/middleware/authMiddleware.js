@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
 const authService = require('../services/authService');
-
-const prisma = new PrismaClient();
+const ApiResponse = require('../utils/ApiResponse');
 
 /**
  * Authentication Middleware
@@ -14,11 +12,10 @@ const authenticate = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_TOKEN_MISSING',
-          message: 'Authentication token is missing'
+      return ApiResponse.unauthorized(res, {
+        message: 'Authentication token is missing',
+        data: {
+          code: 'AUTH_TOKEN_MISSING'
         }
       });
     }
@@ -40,20 +37,18 @@ const authenticate = async (req, res, next) => {
     next();
   } catch (error) {
     if (error.code) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: error.code,
-          message: error.message
+      return ApiResponse.unauthorized(res, {
+        message: error.message,
+        data: {
+          code: error.code
         }
       });
     }
     
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'AUTH_TOKEN_INVALID',
-        message: 'Invalid authentication token'
+    return ApiResponse.unauthorized(res, {
+      message: 'Invalid authentication token',
+      data: {
+        code: 'AUTH_TOKEN_INVALID'
       }
     });
   }
@@ -67,21 +62,19 @@ const authenticate = async (req, res, next) => {
 const authorize = (roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: {
-          code: 'AUTH_REQUIRED',
-          message: 'Authentication required'
+      return ApiResponse.unauthorized(res, {
+        message: 'Authentication required',
+        data: {
+          code: 'AUTH_REQUIRED'
         }
       });
     }
 
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: {
-          code: 'AUTH_INSUFFICIENT_PERMISSIONS',
-          message: 'Insufficient permissions to access this resource'
+      return ApiResponse.forbidden(res, {
+        message: 'Insufficient permissions to access this resource',
+        data: {
+          code: 'AUTH_INSUFFICIENT_PERMISSIONS'
         }
       });
     }
