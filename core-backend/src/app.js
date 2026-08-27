@@ -1,23 +1,23 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
-const { RATE_LIMIT_CONFIG } = require('./config/constants');
-const ApiResponse = require('./utils/ApiResponse');
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+import { RATE_LIMIT_CONFIG } from './config/constants.js';
+import ApiResponse from './utils/api-response.js';
 
 // Import routes
-const authRoutes = require('./routes/authRoutes');
-const documentRoutes = require('./routes/documentRoutes');
-const verificationRoutes = require('./routes/verificationRoutes');
-const userRoutes = require('./routes/userRoutes');
-const issuerRoutes = require('./routes/issuerRoutes');
-const documentTypeRoutes = require('./routes/documentTypeRoutes');
+import authRoutes from './routes/auth.routes.js';
+import documentRoutes from './routes/document.routes.js';
+import verificationRoutes from './routes/verification.routes.js';
+import userRoutes from './routes/user.routes.js';
+import issuerRoutes from './routes/issuer.routes.js';
+import documentTypeRoutes from './routes/document-type.routes.js';
 
 // Import middleware
-const { errorHandler, notFoundHandler } = require('./middleware/errorMiddleware');
-const loggingMiddleware = require('./middleware/loggingMiddleware');
-const { deviceInfo } = require('./middleware/authMiddleware');
+import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
+import loggingMiddleware from './middleware/logging.middleware.js';
+import { deviceInfo } from './middleware/auth.middleware.js';
 
 // Initialize Express app
 const app = express();
@@ -103,10 +103,9 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
-if(process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test') {
   app.use('/api/auth', authLimiter, authRoutes);
-}
-else{
+} else {
   app.use('/api/auth', authRoutes);
 }
 app.use('/api/documents', documentRoutes);
@@ -121,4 +120,4 @@ app.use(notFoundHandler);
 // Global error handling middleware
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

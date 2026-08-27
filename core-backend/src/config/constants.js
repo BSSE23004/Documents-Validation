@@ -4,7 +4,7 @@
  */
 
 // User roles
-const USER_ROLES = {
+export const USER_ROLES = {
   ADMIN: 'admin',
   ISSUER: 'issuer',
   VERIFIER: 'verifier',
@@ -12,14 +12,14 @@ const USER_ROLES = {
 };
 
 // Document statuses
-const DOCUMENT_STATUS = {
+export const DOCUMENT_STATUS = {
   ACTIVE: 'active',
   REVOKED: 'revoked',
   EXPIRED: 'expired'
 };
 
 // Verification statuses
-const VERIFICATION_STATUS = {
+export const VERIFICATION_STATUS = {
   VALID: 'valid',
   INVALID: 'invalid',
   EXPIRED: 'expired',
@@ -27,7 +27,7 @@ const VERIFICATION_STATUS = {
 };
 
 // Error codes
-const ERROR_CODES = {
+export const ERROR_CODES = {
   // Authentication errors
   AUTH_INVALID_CREDENTIALS: 'AUTH_INVALID_CREDENTIALS',
   AUTH_TOKEN_MISSING: 'AUTH_TOKEN_MISSING',
@@ -62,7 +62,7 @@ const ERROR_CODES = {
 };
 
 // HTTP status codes
-const HTTP_STATUS = {
+export const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
   BAD_REQUEST: 400,
@@ -77,19 +77,19 @@ const HTTP_STATUS = {
 };
 
 // JWT configuration
-const JWT_CONFIG = {
+export const JWT_CONFIG = {
   EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
-  ALGORITHM: 'HS256' // Currently using HS256 with JWT_SECRET for local development
+  ALGORITHM: 'HS256'
 };
 
 // Session configuration
-const SESSION_CONFIG = {
+export const SESSION_CONFIG = {
   DURATION_DAYS: parseInt(process.env.SESSION_DURATION_DAYS) || 7,
   MAX_SESSIONS_PER_USER: parseInt(process.env.MAX_SESSIONS_PER_USER) || 5
 };
 
 // Rate limiting configuration
-const RATE_LIMIT_CONFIG = {
+export const RATE_LIMIT_CONFIG = {
   WINDOW_MS: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
   MAX_REQUESTS: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   AUTH_MAX_REQUESTS: parseInt(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS) || 20,
@@ -97,20 +97,8 @@ const RATE_LIMIT_CONFIG = {
 };
 
 // Pagination defaults
-const PAGINATION = {
+export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_LIMIT: 20,
   MAX_LIMIT: 100
-};
-
-module.exports = {
-  USER_ROLES,
-  DOCUMENT_STATUS,
-  VERIFICATION_STATUS,
-  ERROR_CODES,
-  HTTP_STATUS,
-  JWT_CONFIG,
-  SESSION_CONFIG,
-  RATE_LIMIT_CONFIG,
-  PAGINATION
 };

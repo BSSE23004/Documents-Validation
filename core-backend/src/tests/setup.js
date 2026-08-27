@@ -1,6 +1,9 @@
-require('dotenv').config({
+import dotenv from 'dotenv';
+import { jest } from '@jest/globals';
+
+dotenv.config({
   path: '.env.test',
   override: true,
 });
 
-// console.log('SETUP DATABASE_URL:', process.env.DATABASE_URL);
+jest.setTimeout(30000);

@@ -1,7 +1,6 @@
-const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-const { v4: uuidv4 } = require('uuid');
-const { ERROR_CODES } = require('./constants');
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * JWT Configuration Module
@@ -13,7 +12,7 @@ const { ERROR_CODES } = require('./constants');
  * @param {Object} payload - Token payload (userId, email, role, sessionId)
  * @returns {String} JWT token
  */
-const generateJWTToken = (payload) => {
+export const generateJWTToken = (payload) => {
   return jwt.sign(
     payload,
     process.env.JWT_SECRET,
@@ -27,7 +26,7 @@ const generateJWTToken = (payload) => {
  * @returns {Object} Decoded token payload
  * @throws {Error} If token is invalid or expired
  */
-const verifyJWTToken = (token) => {
+export const verifyJWTToken = (token) => {
   try {
     return jwt.verify(token, process.env.JWT_SECRET);
   } catch (error) {
@@ -49,7 +48,7 @@ const verifyJWTToken = (token) => {
  * Generate cryptographically secure refresh token
  * @returns {String} Refresh token (80 character hex string)
  */
-const generateRefreshToken = () => {
+export const generateRefreshToken = () => {
   return crypto.randomBytes(40).toString('hex');
 };
 
@@ -59,7 +58,7 @@ const generateRefreshToken = () => {
  * @param {String} userAgent - User agent string
  * @returns {String} Device ID (64 character hash)
  */
-const generateDeviceId = (userAgent) => {
+export const generateDeviceId = (userAgent) => {
   if (!userAgent) return uuidv4();
   
   // Create a hash of the user agent for consistent device identification
@@ -72,7 +71,7 @@ const generateDeviceId = (userAgent) => {
  * @param {Number} days - Number of days until expiration (default: 7)
  * @returns {Date} Expiration date
  */
-const calculateSessionExpiration = (days = null) => {
+export const calculateSessionExpiration = (days = null) => {
   const sessionDurationDays = days || parseInt(process.env.SESSION_DURATION_DAYS) || 7;
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + sessionDurationDays);
@@ -84,7 +83,7 @@ const calculateSessionExpiration = (days = null) => {
  * @param {String} token - JWT token to decode
  * @returns {Object} Decoded token payload
  */
-const decodeJWTToken = (token) => {
+export const decodeJWTToken = (token) => {
   try {
     return jwt.decode(token);
   } catch (error) {
@@ -99,7 +98,7 @@ const decodeJWTToken = (token) => {
  * @param {String} token - JWT token
  * @returns {Date|null} Expiration date or null if not found
  */
-const getTokenExpiration = (token) => {
+export const getTokenExpiration = (token) => {
   try {
     const decoded = decodeJWTToken(token);
     if (decoded && decoded.exp) {
@@ -116,7 +115,7 @@ const getTokenExpiration = (token) => {
  * @param {String} token - JWT token to check
  * @returns {Boolean} True if token is expired
  */
-const isTokenExpired = (token) => {
+export const isTokenExpired = (token) => {
   const expiration = getTokenExpiration(token);
   if (!expiration) return true;
   return expiration < new Date();
@@ -127,21 +126,9 @@ const isTokenExpired = (token) => {
  * @param {String} token - Token to validate
  * @returns {Boolean} True if token has valid JWT structure
  */
-const isValidJWTStructure = (token) => {
+export const isValidJWTStructure = (token) => {
   if (!token || typeof token !== 'string') return false;
   
   const parts = token.split('.');
   return parts.length === 3;
-};
-
-module.exports = {
-  generateJWTToken,
-  verifyJWTToken,
-  generateRefreshToken,
-  generateDeviceId,
-  calculateSessionExpiration,
-  decodeJWTToken,
-  getTokenExpiration,
-  isTokenExpired,
-  isValidJWTStructure
 };

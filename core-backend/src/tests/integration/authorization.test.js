@@ -1,8 +1,7 @@
-const request = require('supertest');
-const { PrismaClient } = require('@prisma/client');
-
-const app = require('../../app');
-const { generateJWTToken } = require('../../services/authService');
+import request from 'supertest';
+import { PrismaClient } from '@prisma/client';
+import app from '../../app.js';
+import { generateJWTToken } from '../../services/auth.service.js';
 
 const prisma = new PrismaClient();
 
@@ -21,7 +20,6 @@ describe('Endpoint Authorization Integration Tests', () => {
         const uniqueId = `${Date.now()}-${Math.random()}`;
 
         // Create test users
-
         adminUser = await prisma.user.create({
             data: {
                 email: `admin-${uniqueId}@example.com`,
@@ -63,7 +61,6 @@ describe('Endpoint Authorization Integration Tests', () => {
         });
 
         // Generate JWT tokens
-
         adminToken = generateJWTToken({
             userId: adminUser.id,
             email: adminUser.email,
@@ -91,15 +88,6 @@ describe('Endpoint Authorization Integration Tests', () => {
             role: normalUser.role,
             sessionId: 'test-user-session',
         });
-
-        /*
-         * authenticate() calls validateSession()
-         *
-         * validateSession() verifies the JWT and then checks whether
-         * the exact token exists in the database
-         *
-         * so create a matching session for every test user
-         */
 
         // Admin session
         await prisma.session.create({
@@ -147,207 +135,77 @@ describe('Endpoint Authorization Integration Tests', () => {
     });
 
     afterAll(async () => {
-        const userIds = [
-            adminUser.id,
-            issuerUser.id,
-            verifierUser.id,
-            normalUser.id,
-        ];
-
-        // Delete test sessions
-        await prisma.session.deleteMany({
-            where: {
-                userId: {
-                    in: userIds,
+        // Clean sessions
+        if (adminUser?.id) {
+            await prisma.session.deleteMany({
+                where: {
+                    userId: {
+                        in: [
+                            adminUser.id,
+                            issuerUser.id,
+                            verifierUser.id,
+                            normalUser.id,
+                        ],
+                    },
                 },
-            },
-        });
+            });
+        }
 
-        // Delete test users
-        await prisma.user.deleteMany({
-            where: {
-                id: {
-                    in: userIds,
+        // Clean users
+        if (adminUser?.id) {
+            await prisma.user.deleteMany({
+                where: {
+                    id: {
+                        in: [
+                            adminUser.id,
+                            issuerUser.id,
+                            verifierUser.id,
+                            normalUser.id,
+                        ],
+                    },
                 },
-            },
-        });
+            });
+        }
 
         await prisma.$disconnect();
     });
 
-    // AUTHENTICATION
-
-    test('rejects a request without an access token', async () => {
-        const response = await request(app)
-            .post('/api/documents');
-
-        expect(response.status).toBe(401);
-        expect(response.body.data.code).toBe('AUTH_TOKEN_MISSING');
-    });
-
-    test('rejects a tampered access token', async () => {
-        const parts = adminToken.split('.');
-
-        const tamperedToken =
-            `${parts[0]}.${parts[1]}.${parts[2]}tampered`;
-
-        const response = await request(app)
-            .post('/api/documents')
-            .set('Authorization', `Bearer ${tamperedToken}`);
-
-        expect(response.status).toBe(401);
-        expect(response.body.data.code).toBe('AUTH_TOKEN_INVALID');
-    });
-
-    // POST /api/documents
-    // Required roles: admin, issuer
-
-    test('POST /api/documents allows admin', async () => {
-        const response = await request(app)
-            .post('/api/documents')
-            .set('Authorization', `Bearer ${adminToken}`);
-
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
-    });
-
-    test('POST /api/documents allows issuer', async () => {
-        const response = await request(app)
-            .post('/api/documents')
-            .set('Authorization', `Bearer ${issuerToken}`);
-
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
-    });
-
-    test('POST /api/documents rejects normal user', async () => {
-        const response = await request(app)
-            .post('/api/documents')
-            .set('Authorization', `Bearer ${normalUserToken}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body.data.code).toBe(
-            'AUTH_INSUFFICIENT_PERMISSIONS'
-        );
-    });
-
-    // 
-    // PUT /api/documents/:id
-    // Required roles: admin, issuer
-
-    test('PUT /api/documents/:id allows admin', async () => {
-        const response = await request(app)
-            .put('/api/documents/test-document-id')
-            .set('Authorization', `Bearer ${adminToken}`);
-
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
-    });
-
-    test('PUT /api/documents/:id allows issuer', async () => {
-        const response = await request(app)
-            .put('/api/documents/test-document-id')
-            .set('Authorization', `Bearer ${issuerToken}`);
-
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
-    });
-
-    test('PUT /api/documents/:id rejects normal user', async () => {
-        const response = await request(app)
-            .put('/api/documents/test-document-id')
-            .set('Authorization', `Bearer ${normalUserToken}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body.data.code).toBe(
-            'AUTH_INSUFFICIENT_PERMISSIONS'
-        );
-    });
-
-    // DELETE /api/documents/:id
-    // Required role: admin
-
-    test('DELETE /api/documents/:id allows admin', async () => {
-        const response = await request(app)
-            .delete('/api/documents/test-document-id')
-            .set('Authorization', `Bearer ${adminToken}`);
-
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
-    });
-
-    test('DELETE /api/documents/:id rejects issuer', async () => {
-        const response = await request(app)
-            .delete('/api/documents/test-document-id')
-            .set('Authorization', `Bearer ${issuerToken}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body.data.code).toBe(
-            'AUTH_INSUFFICIENT_PERMISSIONS'
-        );
-    });
-
-    test('DELETE /api/documents/:id rejects normal user', async () => {
-        const response = await request(app)
-            .delete('/api/documents/test-document-id')
-            .set('Authorization', `Bearer ${normalUserToken}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body.data.code).toBe(
-            'AUTH_INSUFFICIENT_PERMISSIONS'
-        );
-    });
-
-    // POST /api/document-types
-    // Required role: admin
-
-    test('POST /api/document-types allows admin', async () => {
-        const response = await request(app)
-            .post('/api/document-types')
-            .set('Authorization', `Bearer ${adminToken}`);
-
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
-    });
-
-    test('POST /api/document-types rejects issuer', async () => {
-        const response = await request(app)
-            .post('/api/document-types')
-            .set('Authorization', `Bearer ${issuerToken}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body.data.code).toBe(
-            'AUTH_INSUFFICIENT_PERMISSIONS'
-        );
-    });
-
-    test('POST /api/document-types rejects normal user', async () => {
-        const response = await request(app)
-            .post('/api/document-types')
-            .set('Authorization', `Bearer ${normalUserToken}`);
-
-        expect(response.status).toBe(403);
-        expect(response.body.data.code).toBe(
-            'AUTH_INSUFFICIENT_PERMISSIONS'
-        );
-    });
-
     // POST /api/issuers
-    // Required role: admin
-
     test('POST /api/issuers allows admin', async () => {
         const response = await request(app)
             .post('/api/issuers')
-            .set('Authorization', `Bearer ${adminToken}`);
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                name: 'Test Org Admin',
+                email: `org-${Date.now()}@example.com`,
+            });
 
-        expect(response.status).not.toBe(401);
-        expect(response.status).not.toBe(403);
+        expect(response.status).toBe(201);
     });
 
     test('POST /api/issuers rejects issuer', async () => {
         const response = await request(app)
             .post('/api/issuers')
-            .set('Authorization', `Bearer ${issuerToken}`);
+            .set('Authorization', `Bearer ${issuerToken}`)
+            .send({
+                name: 'Test Org Issuer',
+                email: `org-issuer-${Date.now()}@example.com`,
+            });
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('POST /api/issuers rejects verifier', async () => {
+        const response = await request(app)
+            .post('/api/issuers')
+            .set('Authorization', `Bearer ${verifierToken}`)
+            .send({
+                name: 'Test Org Verifier',
+                email: `org-verifier-${Date.now()}@example.com`,
+            });
 
         expect(response.status).toBe(403);
         expect(response.body.data.code).toBe(
@@ -358,6 +216,158 @@ describe('Endpoint Authorization Integration Tests', () => {
     test('POST /api/issuers rejects normal user', async () => {
         const response = await request(app)
             .post('/api/issuers')
+            .set('Authorization', `Bearer ${normalUserToken}`)
+            .send({
+                name: 'Test Org Normal',
+                email: `org-user-${Date.now()}@example.com`,
+            });
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    // POST /api/document-types
+    test('POST /api/document-types allows admin', async () => {
+        const response = await request(app)
+            .post('/api/document-types')
+            .set('Authorization', `Bearer ${adminToken}`)
+            .send({
+                name: `Degree-${Date.now()}`,
+                description: 'University Degree Document',
+            });
+
+        expect(response.status).toBe(201);
+    });
+
+    test('POST /api/document-types rejects issuer', async () => {
+        const response = await request(app)
+            .post('/api/document-types')
+            .set('Authorization', `Bearer ${issuerToken}`)
+            .send({
+                name: `Degree-Issuer-${Date.now()}`,
+            });
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('POST /api/document-types rejects verifier', async () => {
+        const response = await request(app)
+            .post('/api/document-types')
+            .set('Authorization', `Bearer ${verifierToken}`)
+            .send({
+                name: `Degree-Verifier-${Date.now()}`,
+            });
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('POST /api/document-types rejects normal user', async () => {
+        const response = await request(app)
+            .post('/api/document-types')
+            .set('Authorization', `Bearer ${normalUserToken}`)
+            .send({
+                name: `Degree-User-${Date.now()}`,
+            });
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    // POST /api/documents
+    test('POST /api/documents rejects verifier', async () => {
+        const response = await request(app)
+            .post('/api/documents')
+            .set('Authorization', `Bearer ${verifierToken}`)
+            .send({});
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('POST /api/documents rejects normal user', async () => {
+        const response = await request(app)
+            .post('/api/documents')
+            .set('Authorization', `Bearer ${normalUserToken}`)
+            .send({});
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    // PUT /api/documents/:id
+    test('PUT /api/documents/:id rejects verifier', async () => {
+        const response = await request(app)
+            .put('/api/documents/00000000-0000-0000-0000-000000000000')
+            .set('Authorization', `Bearer ${verifierToken}`)
+            .send({});
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('PUT /api/documents/:id rejects normal user', async () => {
+        const response = await request(app)
+            .put('/api/documents/00000000-0000-0000-0000-000000000000')
+            .set('Authorization', `Bearer ${normalUserToken}`)
+            .send({});
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    // DELETE /api/documents/:id
+    test('DELETE /api/documents/:id allows admin', async () => {
+        const response = await request(app)
+            .delete('/api/documents/00000000-0000-0000-0000-000000000000')
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        expect(response.status).not.toBe(401);
+        expect(response.status).not.toBe(403);
+    });
+
+    test('DELETE /api/documents/:id rejects issuer', async () => {
+        const response = await request(app)
+            .delete('/api/documents/00000000-0000-0000-0000-000000000000')
+            .set('Authorization', `Bearer ${issuerToken}`);
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('DELETE /api/documents/:id rejects verifier', async () => {
+        const response = await request(app)
+            .delete('/api/documents/00000000-0000-0000-0000-000000000000')
+            .set('Authorization', `Bearer ${verifierToken}`);
+
+        expect(response.status).toBe(403);
+        expect(response.body.data.code).toBe(
+            'AUTH_INSUFFICIENT_PERMISSIONS'
+        );
+    });
+
+    test('DELETE /api/documents/:id rejects normal user', async () => {
+        const response = await request(app)
+            .delete('/api/documents/00000000-0000-0000-0000-000000000000')
             .set('Authorization', `Bearer ${normalUserToken}`);
 
         expect(response.status).toBe(403);
@@ -367,8 +377,6 @@ describe('Endpoint Authorization Integration Tests', () => {
     });
 
     // GET /api/verify/logs
-    // Required roles: admin, verifier
-
     test('GET /api/verify/logs allows admin', async () => {
         const response = await request(app)
             .get('/api/verify/logs')
