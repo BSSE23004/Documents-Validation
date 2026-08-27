@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "46203c1c-96b7-47ee-ae90-225dc4b24b25",
-    "name": "Document Validation API",
+    "name": "Document Validation Workflow",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "57698035"
   },
@@ -76,7 +76,12 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"email\": \"user@example.com\",\r\n  \"password\": \"user123\"\r\n}"
+              "raw": "{\r\n  \"email\": \"user@example.com\",\r\n  \"password\": \"user123\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -94,11 +99,8 @@
         },
         {
           "name": "POST Refresh Token",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
           "request": {
-            "method": "GET",
+            "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
@@ -164,13 +166,22 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{userAccessToken}}",
+                  "value": "{{accessToken}}",
                   "type": "string"
                 }
               ]
             },
             "method": "POST",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/api/issuers",
               "host": [
@@ -191,6 +202,22 @@
       "item": [
         {
           "name": "Create Doc - Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const response = pm.response.json();\r",
+                  "\r",
+                  "pm.environment.set(\"doc_id\", response.data.document.id);\r",
+                  "pm.environment.set(\"qr_code_id\", response.document.qrCodeId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
           "request": {
             "auth": {
               "type": "bearer",
@@ -204,6 +231,15 @@
             },
             "method": "POST",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"documentTypeId\": \"f30fca34-bdf9-4619-9332-7f9fcd2438a6\",\r\n  \"issuerId\": \"e05f8c95-5734-4fdc-bc13-78dcfad79c46\",\r\n  \"recipientName\": \"John Doe\",\r\n  \"recipientEmail\": \"john@example.com\",\r\n  \"title\": \"Senior Engineer Offer Letter\",\r\n  \"description\": \"Offer letter for John Doe\",\r\n  \"referenceNumber\": \"OFFER-2026-002\",\r\n  \"issuanceDate\": \"2026-08-27T00:00:00Z\",\r\n  \"expiryDate\": \"2027-08-27T23:59:59Z\",\r\n  \"metadata\": { \"salary\": \"120k\", \"position\": \"Senior Engineer\" }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/api/documents",
               "host": [
@@ -219,19 +255,67 @@
         },
         {
           "name": "Get Doc",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
           "request": {
             "auth": {
               "type": "bearer",
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{userAccessToken}}",
+                  "value": "{{accessToken}}",
                   "type": "string"
                 }
               ]
             },
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "file",
+              "file": {}
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{doc_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{doc_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Docs",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"documentTypeId\": \"71011bee-28a3-494f-a66c-57427328859e\",\r\n  \"issuerId\": \"8483c2fb-92a1-43f9-b96d-f0ecc7874520\",\r\n  \"recipientName\": \"John Doe\",\r\n  \"recipientEmail\": \"john@example.com\",\r\n  \"title\": \"Senior Engineer Offer Letter\",\r\n  \"description\": \"Offer letter for John Doe\",\r\n  \"referenceNumber\": \"OFFER-2026-001\",\r\n  \"issuanceDate\": \"2026-08-27T00:00:00Z\",\r\n  \"expiryDate\": \"2027-08-27T23:59:59Z\",\r\n  \"metadata\": { \"salary\": \"120k\", \"position\": \"Senior Engineer\" }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/api/documents",
               "host": [
@@ -246,18 +330,40 @@
           "response": []
         },
         {
-          "name": "Get Docs",
-          "request": {
-            "method": "GET",
-            "header": []
-          },
-          "response": []
-        },
-        {
           "name": "Update Doc",
           "request": {
-            "method": "GET",
-            "header": []
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"revoked\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{doc_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "documents",
+                "{{doc_id}}"
+              ]
+            }
           },
           "response": []
         },
@@ -310,13 +416,22 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{userAccessToken}}",
+                  "value": "{{accessToken}}",
                   "type": "string"
                 }
               ]
             },
             "method": "POST",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"name\": \"Fake Type\", \"description\": \"Should be rejected\" }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
             "url": {
               "raw": "{{baseUrl}}/api/document-types",
               "host": [
@@ -359,6 +474,82 @@
                 "api",
                 "verify",
                 "logs"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify doc",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"qrCodeId\": \"{{qr_code_id}}\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verify/qr-code",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "verify",
+                "qr-code"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify by Ref Num",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"referenceNumber\": \"OFFER-2026-001\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verify/reference",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "verify",
+                "reference"
               ]
             }
           },

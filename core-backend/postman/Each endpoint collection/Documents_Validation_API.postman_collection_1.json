@@ -1,0 +1,744 @@
+{
+  "info": {
+    "name": "Documents Validation API (Local Development)",
+    "description": "Built directly from API_REQUEST_RESPONSE_SPEC.md. Every request body and every saved example response below matches that spec verbatim. Two endpoints from the original endpoint matrix (POST /api/auth/logout-all and DELETE /api/documents/:id) are not documented in the new spec file — they're included using best-guess shapes consistent with the rest of the API, flagged in their description fields.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{adminToken}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. System Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "header": [{ "key": "Accept", "value": "application/json" }],
+                "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Server is running\",\n  \"data\": {\n    \"timestamp\": \"2026-08-27T10:35:00.000Z\",\n    \"environment\": \"development\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Password123!\",\n  \"name\": \"Alice Smith\",\n  \"role\": \"user\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "description": "role is optional: 'user' (default), 'admin', or 'issuer'."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 201,\n  \"success\": true,\n  \"message\": \"User registered successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"bf365f43-1dcb-4d77-ba79-50e1c710e7de\",\n      \"email\": \"alice@example.com\",\n      \"name\": \"Alice Smith\",\n      \"role\": \"user\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-27T10:30:00.000Z\"\n    },\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n  }\n}"
+            },
+            {
+              "name": "409 Conflict - Duplicate Email",
+              "status": "Conflict",
+              "code": 409,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 409,\n  \"success\": false,\n  \"message\": \"Email already exists\",\n  \"data\": {\n    \"code\": \"VALIDATION_DUPLICATE_EMAIL\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login (Admin)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data) {",
+                  "    if (res.data.token) pm.environment.set('adminToken', res.data.token);",
+                  "    if (res.data.refreshToken) pm.environment.set('refreshToken', res.data.refreshToken);",
+                  "    if (res.data.sessionId) pm.environment.set('sessionId', res.data.sessionId);",
+                  "}",
+                  "pm.test('Login successful', function () {",
+                  "    pm.expect(pm.response.code).to.eql(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Login successful\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"bf365f43-1dcb-4d77-ba79-50e1c710e7de\",\n      \"email\": \"alice@example.com\",\n      \"name\": \"Alice Smith\",\n      \"role\": \"user\"\n    },\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"refreshToken\": \"4a6236044efb4360f97cff3b73c37d2cc358ea600248b80c33e2f793dce2ca81aa83a8768d99d213\",\n    \"sessionId\": \"f4fcfb2a-f9ca-42b9-b7c0-e9e1ce0f5291\",\n    \"expiresAt\": \"2026-09-03T10:31:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized - Invalid Credentials",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 401,\n  \"success\": false,\n  \"message\": \"Invalid email or password\",\n  \"data\": {\n    \"code\": \"AUTH_INVALID_CREDENTIALS\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login (User)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data && res.data.token) {",
+                  "    pm.environment.set('userToken', res.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "refresh"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data) {",
+                  "    if (res.data.token) pm.environment.set('adminToken', res.data.token);",
+                  "    if (res.data.refreshToken) pm.environment.set('refreshToken', res.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Token refreshed successfully\",\n  \"data\": {\n    \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (new access token)\",\n    \"refreshToken\": \"e0cf377c732752b03cc9e9469502adc3a7356617f7df01dd... (rotated refresh token)\",\n    \"expiresAt\": \"2026-09-03T10:45:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Active Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data && Array.isArray(res.data.sessions) && res.data.sessions.length > 0) {",
+                  "    pm.environment.set('sessionId', res.data.sessions[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"sessions\": [\n      {\n        \"id\": \"f4fcfb2a-f9ca-42b9-b7c0-e9e1ce0f5291\",\n        \"deviceId\": \"07d1d539047ef01990ffd8266d015775201aa150a054c0933cf358dd3c032775\",\n        \"userAgent\": \"Mozilla/5.0...\",\n        \"ipAddress\": \"::1\",\n        \"lastActiveAt\": \"2026-08-27T10:32:00.000Z\",\n        \"expiresAt\": \"2026-09-03T10:31:00.000Z\",\n        \"createdAt\": \"2026-08-27T10:31:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Revoke Session",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/sessions/{{sessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "sessions", "{{sessionId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Session revoked successfully\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Logout successful\",\n  \"data\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout-all"]
+            },
+            "description": "NOT documented in API_REQUEST_RESPONSE_SPEC.md — carried over from the original endpoint matrix. Response shape assumed to match Logout's { data: null } pattern; verify against the actual backend."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. User Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"bf365f43-1dcb-4d77-ba79-50e1c710e7de\",\n      \"email\": \"alice@example.com\",\n      \"name\": \"Alice Smith\",\n      \"role\": \"user\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-27T10:30:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Alice Smith (Updated)\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profile"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Profile updated successfully\",\n  \"data\": {\n    \"user\": {\n      \"id\": \"bf365f43-1dcb-4d77-ba79-50e1c710e7de\",\n      \"email\": \"alice@example.com\",\n      \"name\": \"Alice Smith (Updated)\",\n      \"role\": \"user\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-27T10:30:00.000Z\",\n      \"updatedAt\": \"2026-08-27T10:35:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Document Types",
+      "item": [
+        {
+          "name": "List Document Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/document-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "document-types"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"documentTypes\": [\n      {\n        \"id\": \"71011bee-28a3-494f-a66c-57427328859e\",\n        \"name\": \"Offer Letter\",\n        \"description\": \"Official job offer letter issued by companies\",\n        \"isActive\": true,\n        \"createdAt\": \"2026-08-27T10:35:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Document Type (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Certificate of Completion\",\n  \"description\": \"Official completion certificate for training programs\",\n  \"template\": {\n    \"fields\": [\"courseName\", \"grade\", \"hours\"]\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/document-types",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "document-types"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data && res.data.documentType && res.data.documentType.id) {",
+                  "    pm.environment.set('documentTypeId', res.data.documentType.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 201,\n  \"success\": true,\n  \"message\": \"Document type created successfully\",\n  \"data\": {\n    \"documentType\": {\n      \"id\": \"cddf4132-1ad0-41a2-9718-09562087f62b\",\n      \"name\": \"Certificate of Completion\",\n      \"description\": \"Official completion certificate for training programs\",\n      \"template\": { \"fields\": [\"courseName\", \"grade\", \"hours\"] },\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-27T10:33:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Issuers",
+      "item": [
+        {
+          "name": "List Issuers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/issuers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "issuers"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"issuers\": [\n      {\n        \"id\": \"8483c2fb-92a1-43f9-b96d-f0ecc7874520\",\n        \"name\": \"Nova Tech Corp\",\n        \"email\": \"hr@novatech.io\",\n        \"logoUrl\": \"https://novatech.io/logo.png\",\n        \"isActive\": true,\n        \"createdAt\": \"2026-08-27T10:36:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register Issuer (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Academy\",\n  \"email\": \"certificates@acmeacademy.com\",\n  \"logoUrl\": \"https://acmeacademy.com/logo.png\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/issuers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "issuers"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data && res.data.issuer) {",
+                  "    if (res.data.issuer.id) pm.environment.set('issuerId', res.data.issuer.id);",
+                  "    if (res.data.issuer.apiKey) pm.environment.set('issuerApiKey', res.data.issuer.apiKey);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 201,\n  \"success\": true,\n  \"message\": \"Issuer created successfully\",\n  \"data\": {\n    \"issuer\": {\n      \"id\": \"9f896215-b96b-4d04-8c5c-1e809862e7f9\",\n      \"name\": \"Acme Academy\",\n      \"email\": \"certificates@acmeacademy.com\",\n      \"apiKey\": \"2c458784-e81a-48df-ba01-983f5a2ee3ec\",\n      \"isActive\": true,\n      \"createdAt\": \"2026-08-27T10:34:00.000Z\"\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5. Documents Management",
+      "item": [
+        {
+          "name": "Create Document (Admin/Issuer)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentTypeId\": \"{{documentTypeId}}\",\n  \"issuerId\": \"{{issuerId}}\",\n  \"recipientName\": \"John Doe\",\n  \"recipientEmail\": \"john@example.com\",\n  \"title\": \"Senior Engineer Offer Letter\",\n  \"description\": \"Offer letter for John Doe\",\n  \"referenceNumber\": \"OFFER-2026-001\",\n  \"issuanceDate\": \"2026-08-27T00:00:00Z\",\n  \"expiryDate\": \"2028-08-27T23:59:59Z\",\n  \"metadata\": {\n    \"position\": \"Senior Engineer\",\n    \"salary\": \"120,000 USD\",\n    \"department\": \"Engineering\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res && res.success && res.data && res.data.document) {",
+                  "    if (res.data.document.id) pm.environment.set('documentId', res.data.document.id);",
+                  "    if (res.data.document.qrCodeId) pm.environment.set('qrCodeId', res.data.document.qrCodeId);",
+                  "    if (res.data.document.referenceNumber) pm.environment.set('referenceNumber', res.data.document.referenceNumber);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 201,\n  \"success\": true,\n  \"message\": \"Document created successfully\",\n  \"data\": {\n    \"document\": {\n      \"id\": \"85af4aba-248f-4899-b091-6dd5a9bdee23\",\n      \"qrCodeId\": \"7145deb0-e878-403a-84ea-b2bbcaa18e3a\",\n      \"title\": \"Senior Engineer Offer Letter\",\n      \"referenceNumber\": \"OFFER-2026-001\",\n      \"status\": \"active\",\n      \"createdAt\": \"2026-08-27T10:35:00.000Z\"\n    },\n    \"qrCodeUrl\": \"http://localhost:3000/qr/7145deb0-e878-403a-84ea-b2bbcaa18e3a\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents?page=1&limit=10&status=active&search=Senior",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" },
+                { "key": "status", "value": "active" },
+                { "key": "search", "value": "Senior" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"documents\": [\n      {\n        \"id\": \"85af4aba-248f-4899-b091-6dd5a9bdee23\",\n        \"qrCodeId\": \"7145deb0-e878-403a-84ea-b2bbcaa18e3a\",\n        \"title\": \"Senior Engineer Offer Letter\",\n        \"referenceNumber\": \"OFFER-2026-001\",\n        \"status\": \"active\",\n        \"recipientName\": \"John Doe\",\n        \"recipientEmail\": \"john@example.com\",\n        \"issuanceDate\": \"2026-08-27T00:00:00.000Z\",\n        \"expiryDate\": \"2028-08-27T23:59:59.000Z\",\n        \"documentType\": {\n          \"id\": \"71011bee-28a3-494f-a66c-57427328859e\",\n          \"name\": \"Offer Letter\"\n        },\n        \"issuer\": {\n          \"id\": \"8483c2fb-92a1-43f9-b96d-f0ecc7874520\",\n          \"name\": \"Nova Tech Corp\",\n          \"logoUrl\": \"https://novatech.io/logo.png\"\n        }\n      }\n    ],\n    \"pagination\": {\n      \"currentPage\": 1,\n      \"totalPages\": 1,\n      \"totalItems\": 1,\n      \"itemsPerPage\": 10\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Document by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "{{documentId}}"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"document\": {\n      \"id\": \"85af4aba-248f-4899-b091-6dd5a9bdee23\",\n      \"qrCodeId\": \"7145deb0-e878-403a-84ea-b2bbcaa18e3a\",\n      \"title\": \"Senior Engineer Offer Letter\",\n      \"description\": \"Offer letter for John Doe\",\n      \"referenceNumber\": \"OFFER-2026-001\",\n      \"status\": \"active\",\n      \"recipientName\": \"John Doe\",\n      \"recipientEmail\": \"john@example.com\",\n      \"issuanceDate\": \"2026-08-27T00:00:00.000Z\",\n      \"expiryDate\": \"2028-08-27T23:59:59.000Z\",\n      \"metadata\": {\n        \"position\": \"Senior Engineer\",\n        \"salary\": \"120,000 USD\",\n        \"department\": \"Engineering\"\n      },\n      \"documentType\": {\n        \"id\": \"71011bee-28a3-494f-a66c-57427328859e\",\n        \"name\": \"Offer Letter\"\n      },\n      \"issuer\": {\n        \"id\": \"8483c2fb-92a1-43f9-b96d-f0ecc7874520\",\n        \"name\": \"Nova Tech Corp\",\n        \"logoUrl\": \"https://novatech.io/logo.png\"\n      }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Document Status - PATCH (Revoke)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"revoked\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "{{documentId}}"]
+            },
+            "description": "Spec documents this as 'PATCH /api/documents/:id (or PUT)' with the revoke example shown. Partial update — only send the fields you want changed."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Document updated successfully\",\n  \"data\": {\n    \"document\": {\n      \"id\": \"85af4aba-248f-4899-b091-6dd5a9bdee23\",\n      \"qrCodeId\": \"7145deb0-e878-403a-84ea-b2bbcaa18e3a\",\n      \"status\": \"revoked\",\n      \"updatedAt\": \"2026-08-27T11:02:28.827Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Document - PUT (Full)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"documentTypeId\": \"{{documentTypeId}}\",\n  \"issuerId\": \"{{issuerId}}\",\n  \"recipientName\": \"John Doe\",\n  \"recipientEmail\": \"john@example.com\",\n  \"title\": \"Senior Engineer Offer Letter (Revised)\",\n  \"description\": \"Offer letter for John Doe\",\n  \"referenceNumber\": \"OFFER-2026-001\",\n  \"issuanceDate\": \"2026-08-27T00:00:00Z\",\n  \"expiryDate\": \"2028-08-27T23:59:59Z\",\n  \"status\": \"active\",\n  \"metadata\": {\n    \"position\": \"Senior Engineer\",\n    \"salary\": \"125,000 USD\",\n    \"department\": \"Engineering\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "{{documentId}}"]
+            },
+            "description": "Spec groups this route as 'PATCH /api/documents/:id (or PUT)' but only shows the PATCH/revoke example. This full-replace body is inferred from the Create Document schema — confirm field-by-field against the backend before relying on it."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Document (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/documents/{{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "documents", "{{documentId}}"]
+            },
+            "description": "NOT documented in API_REQUEST_RESPONSE_SPEC.md — carried over from the original endpoint matrix (Admin only). Response shape assumed to follow the { data: null } pattern used by other delete endpoints; verify against the actual backend."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Public Verification",
+      "item": [
+        {
+          "name": "Verify by QR Code",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrCodeId\": \"{{qrCodeId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verify/qr-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "verify", "qr-code"]
+            },
+            "description": "HTTP 200 is returned in both the valid and revoked scenarios below — check data.verificationStatus, not the HTTP status code, to render the frontend UI state."
+          },
+          "response": [
+            {
+              "name": "200 OK - Valid Document",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Verification completed\",\n  \"data\": {\n    \"success\": true,\n    \"verificationStatus\": \"valid\",\n    \"data\": {\n      \"document\": {\n        \"documentType\": \"Offer Letter\",\n        \"title\": \"Senior Engineer Offer Letter\",\n        \"issuer\": {\n          \"name\": \"Nova Tech Corp\",\n          \"logoUrl\": \"https://novatech.io/logo.png\"\n        },\n        \"recipient\": {\n          \"name\": \"John Doe\",\n          \"email\": \"john@example.com\"\n        },\n        \"issuanceDate\": \"2026-08-27T00:00:00.000Z\",\n        \"referenceNumber\": \"OFFER-2026-001\",\n        \"status\": \"active\",\n        \"metadata\": {\n          \"position\": \"Senior Engineer\",\n          \"salary\": \"120k\"\n        }\n      },\n      \"verifiedAt\": \"2026-08-27T11:00:00.000Z\"\n    }\n  }\n}"
+            },
+            {
+              "name": "200 OK - Revoked Document",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Verification completed\",\n  \"data\": {\n    \"success\": false,\n    \"verificationStatus\": \"revoked\",\n    \"message\": \"Document has been revoked by issuer\",\n    \"data\": {\n      \"document\": {\n        \"documentType\": \"Offer Letter\",\n        \"title\": \"Senior Engineer Offer Letter\",\n        \"issuer\": {\n          \"name\": \"Nova Tech Corp\",\n          \"logoUrl\": \"https://novatech.io/logo.png\"\n        },\n        \"recipient\": {\n          \"name\": \"John Doe\",\n          \"email\": \"john@example.com\"\n        },\n        \"referenceNumber\": \"OFFER-2026-001\",\n        \"status\": \"revoked\"\n      },\n      \"revokedAt\": \"2026-08-27T11:02:28.827Z\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Verify by Reference Number",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"referenceNumber\": \"{{referenceNumber}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/verify/reference",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "verify", "reference"]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Valid Document",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Verification completed\",\n  \"data\": {\n    \"success\": true,\n    \"verificationStatus\": \"valid\",\n    \"data\": {\n      \"document\": {\n        \"title\": \"Senior Engineer Offer Letter\",\n        \"referenceNumber\": \"OFFER-2026-001\",\n        \"status\": \"active\"\n      }\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Verification Logs (Admin/Verifier)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/verify/logs?page=1&limit=20&documentId={{documentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "verify", "logs"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "documentId", "value": "{{documentId}}" }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"statusCode\": 200,\n  \"success\": true,\n  \"message\": \"Request successful\",\n  \"data\": {\n    \"logs\": [\n      {\n        \"id\": \"c9281a0b-1823-4dfb-90ea-128938abc123\",\n        \"documentId\": \"85af4aba-248f-4899-b091-6dd5a9bdee23\",\n        \"qrCodeId\": \"7145deb0-e878-403a-84ea-b2bbcaa18e3a\",\n        \"verificationStatus\": \"valid\",\n        \"ipAddress\": \"192.168.1.100\",\n        \"userAgent\": \"Mozilla/5.0 Mobile Scanner\",\n        \"timestamp\": \"2026-08-27T11:00:00.000Z\"\n      }\n    ],\n    \"pagination\": {\n      \"currentPage\": 1,\n      \"totalPages\": 1,\n      \"totalItems\": 1,\n      \"itemsPerPage\": 20\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
