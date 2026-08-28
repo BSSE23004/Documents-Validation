@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 
 # Environment variables
@@ -108,6 +107,3 @@ dist
 # OS
 .DS_Store
 Thumbs.db
-
-# Prisma
-prisma/migrations/

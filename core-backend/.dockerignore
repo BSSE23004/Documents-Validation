@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+
+# Git
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Tests and coverage
+coverage
+.nyc_output
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode
+.idea
+
+# Postman
+postman
+
+# OS
+.DS_Store
+Thumbs.db
