@@ -1,271 +1,342 @@
-# Core Backend - Secure Delivery & Verification System
+# Secure Delivery & Verification System
 
-Backend Squad A (Core Architecture & Security) implementation for the Secure Delivery & Verification System.
+[![Node.js](https://img.shields.io/badge/Node.js-v18+-green.svg)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4.x-lightgrey.svg)](https://expressjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-blue.svg)](https://supabase.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-5.x-2D3748.svg)](https://www.prisma.io/)
+[![License](https://img.shields.io/badge/License-ISC-blue.svg)](LICENSE)
 
-## ✅ Implementation Status
+A robust, enterprise-grade digital asset verification engine designed to issue and verify QR-coded, cryptographically authenticated documents, certificates, and project handoffs.
 
-### Complete ✅
-- **System Architecture**: MVC pattern with Express.js
-- **Database Schema**: PostgreSQL via Supabase with Prisma ORM
-- **JWT Authentication**: Complete with device-based session management
-- **Token Rotation**: Refresh token system with rotation
-- **Session Management**: One session per device with automatic cleanup
-- **API Endpoints**: All core endpoints implemented and tested
-- **Security Features**: Password hashing, rate limiting, CORS, security headers
-- **Error Handling**: Centralized error handling with consistent format
-- **Supabase Integration**: Successfully connected and synchronized
+---
 
-### Server Status
-- **Development Server**: ✅ Running on http://localhost:3000
-- **Database**: ✅ Connected to Supabase PostgreSQL
-- **Health Check**: ✅ http://localhost:3000/health
-- **API Base**: ✅ http://localhost:3000/api
+## 📑 Table of Contents
 
-## Overview
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+- [System Architecture](#-system-architecture)
+- [Tech Stack](#-tech-stack)
+- [Repository Structure](#-repository-structure)
+- [Database Schema](#-database-schema)
+- [Getting Started](#-getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation & Setup](#installation--setup)
+  - [Database Migration & Seeding](#database-migration--seeding)
+  - [Running the Application](#running-the-application)
+- [API Overview](#-api-overview)
+- [Testing](#-testing)
+- [Docker Support](#-docker-support)
+- [Security & Best Practices](#-security--best-practices)
 
-This backend provides the core API for the digital asset verification engine, supporting QR-coded, cryptographically verified documents, certificates, and project handoffs.
+---
 
-## Technology Stack
+## 🌟 Overview
 
-- **Runtime**: Node.js (LTS)
-- **Framework**: Express.js 4.x
-- **Database**: PostgreSQL (via Supabase)
-- **ORM**: Prisma 5.x
-- **Authentication**: JWT (jsonwebtoken) + bcryptjs
-- **Security**: Helmet, CORS, express-rate-limit
-- **Logging**: Winston
+The **Secure Delivery & Verification System** provides instant, tamper-evident verification of documents and certificates. Using cryptographic references and unique QR codes, verifiers and clients can inspect and authenticate issued digital assets against a centralized, secure verification ledger.
 
-## Architecture
+---
 
-The project follows MVC architecture pattern:
+## ✨ Key Features
+
+- **🔐 Cryptographic Verification**: Instant public verification via QR code scanning or unique reference ID lookups.
+- **🛡️ Secure Authentication & Device Sessions**: JWT authentication featuring multi-device session management, token rotation, and single/all-device logout capabilities.
+- **👥 Role-Based Access Control (RBAC)**: Fine-grained permissions for administrators, issuers, and verifiers.
+- **📄 Complete Document Lifecycle**: Support for creating, managing, categorizing, and auditing verifiable digital documents.
+- **📊 Comprehensive Audit & Verification Logs**: Tracking verification attempts, client metadata, timestamps, and IP addresses.
+- **⚡ High Performance & Security**: Built-in rate limiting, security headers via Helmet, CORS policies, and centralized structured logging with Winston.
+
+---
+
+## 🏗️ System Architecture
 
 ```
-core-backend/
-├── src/
-│   ├── config/             # Configuration files
-│   ├── controllers/        # Request handlers
-│   ├── middleware/         # Custom middleware
-│   ├── models/             # Data models (Prisma-based)
-│   ├── routes/             # API route definitions
-│   ├── services/           # Business logic
-│   └── app.js              # Express app configuration
-├── prisma/
-│   └── schema.prisma       # Database schema
-├── tests/                  # Test files
-├── server.js               # Entry point
-├── package.json
-└── .env.example            # Environment variables template
+┌─────────────────────────────────────────────────────────────┐
+│                      Client / Frontend                      │
+│                  (Web / Mobile / QR Scanner)                │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ HTTPS / REST API
+┌──────────────────────────────▼──────────────────────────────┐
+│                    API Gateway & Security                   │
+│        (Express.js, Rate Limiting, Helmet, CORS)            │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│                     Core Business Logic                     │
+│  ┌─────────────────────────┐     ┌───────────────────────┐  │
+│  │   Auth & Session Svc    │     │   Document Service    │  │
+│  └─────────────────────────┘     └───────────────────────┘  │
+│  ┌─────────────────────────┐     ┌───────────────────────┐  │
+│  │   Verification Service  │     │   User & Issuer Svc   │  │
+│  └─────────────────────────┘     └───────────────────────┘  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│                      Data Access Layer                      │
+│                        (Prisma ORM)                         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│                       Database Layer                        │
+│                   (Supabase / PostgreSQL)                   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Database Schema
+---
 
-The system includes the following main entities:
+## 💻 Tech Stack
 
-- **User**: Authentication and authorization with role-based access control
-- **Session**: Device-based session management with JWT tokens
-- **Issuer**: Organizations that issue documents
-- **DocumentType**: Categories of verifiable documents
-- **Document**: Core document/certificate management with QR codes
-- **VerificationLog**: Verification tracking and audit logging
+- **Runtime Environment:** Node.js (>= 18.0.0)
+- **Web Framework:** Express.js (4.x)
+- **Database:** PostgreSQL (via Supabase)
+- **ORM:** Prisma (5.x)
+- **Authentication & Security:** JWT (`jsonwebtoken`), `bcryptjs`, `helmet`, `express-rate-limit`, `cors`
+- **Validation:** `express-validator`
+- **Logging:** Winston
+- **Testing:** Jest, Supertest
 
-## API Endpoints
+---
 
-### Authentication ✅
-- `POST /api/auth/register` - Register new user with validation
-- `POST /api/auth/login` - Login with device-based session creation
-- `POST /api/auth/logout` - Logout from current session
-- `POST /api/auth/logout-all` - Logout from all devices
-- `POST /api/auth/refresh` - Token refresh with rotation
-- `GET /api/auth/sessions` - Get all user sessions
-- `DELETE /api/auth/sessions/:sessionId` - Revoke specific session
+## 📁 Repository Structure
 
-### Documents
-- `POST /api/documents` - Create document
-- `GET /api/documents` - Get all documents (paginated)
-- `GET /api/documents/:id` - Get document by ID
-- `PUT /api/documents/:id` - Update document
-- `DELETE /api/documents/:id` - Delete document
+```
+Documents-Validation/
+├── core-backend/                   # Core backend application
+│   ├── prisma/                     # Database schema & Prisma migrations
+│   │   └── schema.prisma           # Prisma schema definitions
+│   ├── src/
+│   │   ├── config/                 # Environment & app configurations
+│   │   ├── controllers/            # API route controllers
+│   │   ├── middleware/             # Auth, error handling, validation middleware
+│   │   ├── models/                 # Data models & schemas
+│   │   ├── routes/                 # API route declarations
+│   │   ├── services/               # Core business logic services
+│   │   ├── tests/                  # Unit, integration, and live tests
+│   │   └── app.js                  # Express app setup
+│   ├── postman/                    # Postman collection & environment files
+│   ├── Dockerfile                  # Container definition
+│   ├── docker-compose.yaml         # Multi-container orchestration
+│   ├── seed.js                     # Database seeder script
+│   ├── server.js                   # Application entry point
+│   ├── package.json                # Dependencies and scripts
+│   └── .env.example                # Example environment variables
+├── TECHNICAL_SPECIFICATION.md      # Detailed technical specification
+└── README.md                       # Root documentation
+```
 
-### Verification ✅
-- `POST /api/verify/qr-code` - Verify document by QR code (public)
-- `POST /api/verify/reference` - Verify document by reference number (public)
-- `GET /api/verify/logs` - Get verification logs (admin/verifier)
+---
 
-### Users
-- `GET /api/users/profile` - Get current user profile
-- `PUT /api/users/profile` - Update user profile
+## 🗄️ Database Schema
 
-### Issuers
-- `GET /api/issuers` - Get all issuers
-- `POST /api/issuers` - Create issuer (admin)
+The system core entities modeled in Prisma include:
 
-### Document Types
-- `GET /api/document-types` - Get all document types
-- `POST /api/document-types` - Create document type (admin)
+- **`User`**: System accounts (Admin, Issuer, Verifier) with hashed credentials and profile data.
+- **`Session`**: Tracks active devices, refresh tokens, IP addresses, user agents, and expiry.
+- **`Issuer`**: Organizations or entities authorized to issue verifiable credentials.
+- **`DocumentType`**: Classification and templates for issued certificates/documents.
+- **`Document`**: Core verifiable records holding metadata, cryptographic hashes, QR payload, and status.
+- **`VerificationLog`**: Immutable history of all verification lookups and scanner metadata.
 
-## Setup Instructions
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
-- PostgreSQL database (Supabase)
-- npm or yarn
 
-### Installation
+- **Node.js** (v18.0.0 or higher)
+- **npm** (v9.0.0 or higher)
+- **PostgreSQL** instance (or free Supabase project)
 
-1. Clone the repository and navigate to the backend directory:
+### Installation & Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/BSSE23004/Documents-Validation.git
+   cd core-backend
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables:**
+   ```bash
+   cp .env.example .env
+   ```
+   Open `.env` and fill in your values:
+  
+
+### Database Migration & Seeding
+
+1. **Generate Prisma Client:**
+   ```bash
+   npm run prisma:generate
+   ```
+
+2. **Push schema to database (or run migrations):**
+   ```bash
+   npm run prisma:migrate
+   # or npx prisma db push
+   ```
+
+3. **(Optional) Seed initial data:**
+   ```bash
+   npm run seed
+   ```
+
+### Running the Application
+
+- **Development mode (with auto-reload):**
+  ```bash
+  npm run dev
+  ```
+- **Production mode:**
+  ```bash
+  npm start
+  ```
+- **Prisma Studio (Database GUI):**
+  ```bash
+  npm run prisma:studio
+  ```
+
+The server will be available at `http://localhost:3000`.
+
+---
+
+## 🔌 API Overview
+
+### Base URL: `/api`
+
+| Module | Method | Endpoint | Access | Description |
+|---|---|---|---|---|
+| **Health** | `GET` | `/health` | Public | System status and database connectivity |
+| **Auth** | `POST` | `/api/auth/register` | Public | Register a new user |
+| | `POST` | `/api/auth/login` | Public | Login & establish device session |
+| | `POST` | `/api/auth/refresh` | Public | Rotate and refresh access token |
+| | `POST` | `/api/auth/logout` | Authenticated | Logout active session |
+| | `POST` | `/api/auth/logout-all`| Authenticated | Revoke all user sessions |
+| | `GET` | `/api/auth/sessions` | Authenticated | List all active sessions |
+| **Verification** | `POST` | `/api/verify/qr-code` | Public | Verify document via QR code payload |
+| | `POST` | `/api/verify/reference` | Public | Verify document via reference ID |
+| | `GET` | `/api/verify/logs` | Admin / Verifier | Retrieve verification audit logs |
+| **Documents** | `GET` | `/api/documents` | Authenticated | List documents (paginated & filtered) |
+| | `POST` | `/api/documents` | Issuer / Admin | Issue a new verifiable document |
+| | `GET` | `/api/documents/:id` | Authenticated | Retrieve document by ID |
+| | `PUT` | `/api/documents/:id` | Admin | Update document record |
+| | `DELETE`| `/api/documents/:id` | Admin | Revoke / delete document |
+| **Issuers & Types**| `GET` | `/api/issuers` | Authenticated | List registered issuers |
+| | `POST` | `/api/issuers` | Admin | Register a new issuer |
+| | `GET` | `/api/document-types` | Authenticated | List supported document types |
+| | `POST` | `/api/document-types` | Admin | Add new document type |
+
+---
+
+## 🧪 Testing
+
+Run test suites using Jest:
+
 ```bash
+# Run unit and integration tests
+npm test
+
+# Run unit tests only
+npm run test:unit
+
+# Run integration tests only
+npm run test:integration
+
+# Run live end-to-end tests
+npm run test:live
+```
+
+---
+
+## 🐳 Docker Support
+
+The application can be run using Docker and Docker Compose. The Docker setup runs the Node.js/Express backend in a container while using a PostgreSQL database hosted on **Supabase**.
+
+Each developer should create their **own Supabase PostgreSQL database** 
+
+### Prerequisites
+
+Make sure you have:
+
+* **Docker Desktop** installed and running
+
+### Docker Setup
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/BSSE23004/Documents-Validation.git
 cd core-backend
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+#### 2. Create your own Supabase project
 
-3. Set up environment variables:
+1. Go to [Supabase](https://supabase.com/) and sign in.
+2. Create a new project.
+3. Wait for the project database to finish provisioning.
+4. Open your project in the Supabase dashboard.
+5. Navigate to **Connect** and obtain your PostgreSQL connection string.
+6. Use the appropriate connection string for your environment. The **Session Pooler** connection is recommended when a direct database connection is not suitable.
+
+#### 3. Create your environment file
+
+Copy the example environment file:
+
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your configuration:
-- `DATABASE_URL`: Your Supabase PostgreSQL connection string
-- `JWT_SECRET`: Secret key for JWT token signing
-- Other configuration values as needed
+Open `.env` and configure the required values.
 
-4. Set up the database:
+At minimum, update:
+
+```env
+DATABASE_URL="your_supabase_postgresql_connection_string"
+JWT_SECRET="your_own_secure_jwt_secret"
+```
+
+#### 4. Build and start the application
+
+From the `core-backend` directory, run:
+
 ```bash
-# Generate Prisma client
-npm run prisma:generate
-
-# Push schema to database (for initial setup)
-npx prisma db push
+docker compose up --build
 ```
 
-5. Start the development server:
-```bash
-npm run dev
+The API will be available at:
+
+```text
+http://localhost:3000
 ```
 
-The server will start on `http://localhost:3000`
+The health-check endpoint is:
 
-## Development Scripts
-
-- `npm start` - Start production server
-- `npm run dev` - Start development server with nodemon
-- `npm run prisma:generate` - Generate Prisma client
-- `npm run prisma:migrate` - Run database migrations
-- `npm run prisma:studio` - Open Prisma Studio
-- `npm test` - Run tests
-- `npm run lint` - Run ESLint
-- `npm run format` - Format code with Prettier
-
-## Security Features ✅
-
-- **JWT Authentication**: Complete implementation with device-based sessions
-- **Token Rotation**: Refresh token system for enhanced security
-- **Password Security**: bcryptjs hashing with 12 salt rounds
-- **Password Validation**: Strong password requirements
-- **Session Management**: One session per device with automatic cleanup
-- **Rate Limiting**: Configurable per-endpoint limits
-- **CORS Configuration**: Configured for frontend integration
-- **Security Headers**: Helmet.js for comprehensive security
-- **Input Validation**: express-validator integration
-- **SQL Injection Prevention**: Parameterized queries via Prisma
-
-## API Response Format
-
-All API responses follow this format:
-
-### Success Response
-```json
-{
-  "success": true,
-  "message": "Operation successful",
-  "data": { ... }
-}
+```text
+http://localhost:3000/health
 ```
 
-### Error Response
-```json
-{
-  "success": false,
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Error message",
-    "details": { ... },
-    "timestamp": "2026-08-20T10:00:00Z",
-    "path": "/api/endpoint"
-  }
-}
-```
 
-## Frontend Integration
+### Important Notes
 
-### Base URL
-- Development: `http://localhost:3000/api`
-- Production: `https://api.devlogix.online/api`
+* Docker does **not** create the PostgreSQL database itself; PostgreSQL is hosted by your Supabase project.
+* The application container connects to Supabase using the `DATABASE_URL` provided in `.env`.
 
-### Authentication Flow ✅
-1. Frontend sends credentials to `POST /api/auth/login`
-2. Backend returns JWT token, refresh token, and session info
-3. Frontend stores tokens securely
-4. Frontend includes JWT token in `Authorization: Bearer <token>` header
-5. Backend validates token against database session
-6. Token refresh implemented for extended sessions
 
-### Verification Flow ✅
-1. Frontend captures QR code
-2. Frontend sends QR code ID to `POST /api/verify/qr-code`
-3. Backend returns verification result with document details
-4. Frontend displays verification result
+---
 
-## Testing ✅
+## 🔒 Security & Best Practices
 
-All core functionality has been tested:
+- **Password Hashing:** Passwords encrypted using `bcryptjs` with salt rounds set via configuration.
+- **Session Protection:** Refresh token rotation prevents token theft and replay attacks.
+- **Rate Limiting:** Protects endpoints against brute-force and DDoS attacks.
+- **Headers & CORS:** Sanitized via `helmet` and restrictive origin policies.
+- **Input Validation:** Request bodies and parameters validated with `express-validator`.
 
-- ✅ User registration with validation
-- ✅ User login with session creation
-- ✅ JWT authentication middleware
-- ✅ Token refresh with rotation
-- ✅ Session management and retrieval
-- ✅ Logout functionality
-- ✅ Protected endpoint access
-- ✅ Public verification endpoints
-- ✅ Database connectivity with Supabase
+---
 
-## Recent Implementation Updates
+## 📄 License
 
-### JWT Code Refactoring (Complete) ✅
-- Extracted JWT-related code from authService.js to dedicated config/jwt.js module
-- Reduced authService.js from 447 to 412 lines for better navigation
-- Centralized JWT logic for improved maintainability
-- Added utility functions for JWT operations (decode, expiration checking, validation)
-- Maintained 100% backward compatibility
-- All authentication functionality tested and working
-
-### JWT Authentication System (Complete)
-- Implemented comprehensive JWT authentication with device-based session management
-- Added token rotation system for enhanced security
-- Integrated with Supabase PostgreSQL database
-- Implemented session limits and automatic cleanup
-- Added comprehensive error handling and validation
-
-### Database Integration (Complete)
-- Successfully connected to Supabase PostgreSQL
-- Synchronized Prisma schema with database
-- Implemented proper relationships and constraints
-- Added database indexes for performance optimization
-
-## Documentation
-
-- [BACKEND_SETUP_SUMMARY.md](./BACKEND_SETUP_SUMMARY.md) - Initial setup summary
-- [AUTHENTICATION_IMPLEMENTATION_COMPLETE.md](./AUTHENTICATION_IMPLEMENTATION_COMPLETE.md) - Authentication implementation details
-- [JWT_REFACTORING_COMPLETE.md](./JWT_REFACTORING_COMPLETE.md) - JWT code refactoring details
-
-## License
-
-ISC
-
-## Team
-
-Backend Squad A (Core Architecture & Security)
+This project is licensed under the [ISC License](LICENSE).
